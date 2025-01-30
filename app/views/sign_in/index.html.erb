@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign In - MoneyMap</title>
+  <link href="<%= asset_path 'application.tailwind.css' %>" rel="stylesheet">
+</head>
+<body class="bg-gray-200 flex items-center justify-center min-h-screen" style="background-color: #F2F2F2;">
+  <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+    <h1 class="text-2xl font-bold mb-6 text-center">Sign In to MoneyMap</h1>
+    <%= form_with url: signin_path, method: :post, local: true, class: "space-y-4" do |form| %>
+      <div>
+        <%= form.label :email, class: "block text-sm font-medium text-gray-700" %>
+        <%= form.email_field :email, required: true, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" %>
+      </div>
+      <div>
+        <%= form.label :password, class: "block text-sm font-medium text-gray-700" %>
+        <%= form.password_field :password, required: true, class: "mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring focus:border-blue-300" %>
+      </div>
+      <div>
+        <%= form.submit "Sign In", class: "w-full py-2 px-4 bg-blue-500 text-white font-bold rounded-md hover:bg-blue-600 focus:outline-none focus:ring focus:ring-blue-300" %>
+      </div>
+    <% end %>
+    <p class="text-sm mt-4 text-center">Don't have an account? 
+      <a href="<%= signup_path %>" class="text-blue-500 hover:underline">Sign Up</a>
+    </p>
+  </div>
+</body>
+</html>
