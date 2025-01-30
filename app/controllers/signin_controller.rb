@@ -1,17 +1,22 @@
 class SigninController < ApplicationController
-  def index
-    # This will render the sign-in form
-  end
-
   def create
-    # Handle sign-in logic here
-    # For now, just redirect to root_path
-    redirect_to root_path, notice: 'Signed in successfully.'
-  end
+    # Log parameters
+    Rails.logger.debug "Email: #{params[:email]}"
+    Rails.logger.debug "Password: #{params[:password]}"
 
-  def destroy
-    # Handle sign-out logic here
-    # For now, just redirect to root_path
-    redirect_to root_path, notice: 'Signed out successfully.'
+    # Step 1: Find the user
+    user = User.find_by(email: params[:email])
+    Rails.logger.debug "User found: #{user.inspect}"
+
+    # Step 2: Authenticate
+    if user&.authenticate(params[:password])
+      Rails.logger.debug "Authentication successful"
+      session[:user_id] = user.id
+      redirect_to root_path, notice: 'Successfully signed in!'
+    else
+      Rails.logger.debug "Authentication failed"
+      flash.now[:alert] = 'Invalid email or password.'
+      render :new
+    end
   end
 end

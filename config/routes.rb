@@ -5,10 +5,9 @@ Rails.application.routes.draw do
   post 'signup', to: 'signup#create'
 
   # Sign In routes
-  get 'signin', to: 'signin#index'
-  post 'signin', to: 'signin#create'
-  delete 'logout', to: 'signin#destroy'
-
+get 'signin', to: 'signin#new'
+post 'signin', to: 'signin#create'
+delete 'signout', to: 'signin#destroy'
   # Root path
   root 'signup#index'
 end

@@ -7,10 +7,10 @@
 # be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
-#
+
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_29_200343) do
+ActiveRecord::Schema[8.0].define(version: 2025_01_30_190102) do
   create_table "users", primary_key: "user_id", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -18,5 +18,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_29_200343) do
     t.string "phone"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "password_digest"
   end
 end

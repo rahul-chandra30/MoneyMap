@@ -8,7 +8,7 @@ class SignupController < ApplicationController
     Rails.logger.info "User Params: #{user_params.inspect}"
     if @user.save
       Rails.logger.info "User saved successfully"
-      redirect_to root_path, notice: 'User was successfully created.'
+      redirect_to signin_path, notice: 'User was successfully created. Please sign in.'
     else
       Rails.logger.error "User save failed: #{@user.errors.full_messages.join(", ")}"
       render :index
