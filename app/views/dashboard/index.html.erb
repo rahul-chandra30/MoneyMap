@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - MoneyMap</title>
+  
+  <%= stylesheet_link_tag "application", media: "all" %>
+  <style>
+    body {
+      background-color: #f3f4f6;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="flex">
+  <!-- Sidebar -->
+  <div class="w-64 min-h-screen backdrop-blur-sm shadow-lg p-4 fixed left-0">
+    <div class="flex items-center space-x-3 mb-6">
+      <%= image_tag "money_map.png", alt: "MoneyMap Logo", class: "h-8 w-8" %>
+
+    </div>
+    <ul class="space-y-2">
+      <li><%= link_to "Dashboard", dashboard_path, class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+      <li><%= link_to "Overview",class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+      <li><%= link_to "Transactions",  class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+      <li><%= link_to "Categories", class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+      <li><%= link_to "Tags", class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+      <li><%= link_to "Settings",  class: "block px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200" %></li>
+    </ul>
+    <div class="mt-6">
+      <%= link_to "Log Out", signin_path, method: :delete, class: "text-blue-500 hover:underline" %>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="flex-1 ml-64">
+    <!-- Header -->
+    <header class="bg-white shadow-md py-4 px-8 flex items-center justify-end">
+      <%
+=begin%>
+ <%= link_to "Profile", profile_path, class: "text-blue-500 hover:underline" %> 
+<%
+=end%>
+    </header>
+
+    <!-- Main Section -->
+    <div class="p-8">
+      <%= yield %>
+    </div>
+  </div>
+</body>
+</html>

@@ -10,4 +10,7 @@ post 'signin', to: 'signin#create'
 delete 'signout', to: 'signin#destroy'
   # Root path
   root 'signup#index'
+
+  #Dashboard
+  get 'dashboard', to: 'dashboard#index'
 end
