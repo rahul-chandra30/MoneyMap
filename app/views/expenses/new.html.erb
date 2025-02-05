@@ -304,7 +304,7 @@
   </div>
 
   <button type="button" id="add-expense" class="add-expense-btn">Add More</button>
-  <%= f.submit "Save", class: "save-btn" %>
+<button type="button" class="save-btn" onclick="saveExpenses()">Save</button>
 <% end %>
       </div>
     </div>
@@ -359,6 +359,55 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
+function saveExpenses() {
+  const year = document.querySelector("select[name='year']").value;
+  const month = document.querySelector("select[name='month']").value;
+  const income = document.querySelector("input[name='income']").value;
+  
+  const expenses = [];
+  document.querySelectorAll('.expense-entry').forEach(entry => {
+    const category = entry.querySelector("select[name='expense[category][]']").value;
+    const amount = entry.querySelector("input[name='expense[amount][]']").value;
+    
+    if (category && amount) {
+      expenses.push({ 
+        category: category,
+        amount_spent: parseFloat(amount) 
+      });
+    }
+  });
+
+  fetch('<%= expenses_path %>', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify({
+      year: year,
+      month: month,
+      income: income,
+      expense: {
+        category: expenses.map(e => e.category),
+        amount: expenses.map(e => e.amount_spent)
+      }
+    })
+  })
+  .then(response => {
+    if (response.ok) {
+      showToast("Expenses saved successfully!", "success");
+      setTimeout(() => window.location.reload(), 1500); 
+    } else {
+      response.json().then(data => {
+        showToast(data.error || "Error saving expenses", "error");
+      });
+    }
+  })
+  .catch(error => {
+    showToast("Network error: " + error.message, "error");
+  });
+}
+
 function loadExistingData() {
   const year = document.querySelector("select[name='year']").value;
   const month = document.querySelector("select[name='month']").value;
@@ -368,7 +417,7 @@ function loadExistingData() {
       .then(response => response.json())
       .then(data => {
         // Populate income
-        document.querySelector("input[name='income']").value = data.income || 0;
+        document.querySelector("input[name='income']").value = data.income || '';
         
         // Populate expenses
         const container = document.getElementById("expenses-container");
