@@ -56,6 +56,11 @@ group :development do
   gem "web-console"
 end
 
+
+group :development do
+  gem "rails_live_reload"
+end
+
 group :test do
   # Use system testing [https://guides.rubyonrails.org/testing.html#system-testing]
   gem "capybara"

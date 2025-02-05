@@ -7,10 +7,31 @@
 # be faster and is potentially less error prone than running all of your
 # migrations from scratch. Old migrations may fail to apply correctly if those
 # migrations use external dependencies or application code.
-
+#
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_01_30_190102) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_05_000000) do
+  create_table "expenditures", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "year"
+    t.integer "month"
+    t.decimal "income"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_expenditures_on_user_id"
+  end
+
+  create_table "expenses", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "year"
+    t.string "month"
+    t.string "category"
+    t.decimal "amount_spent"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_expenses_on_user_id"
+  end
+
   create_table "users", primary_key: "user_id", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -20,4 +41,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_01_30_190102) do
     t.datetime "updated_at", null: false
     t.string "password_digest"
   end
+
+  add_foreign_key "expenditures", "users"
+  add_foreign_key "expenses", "users", primary_key: "user_id"
 end
