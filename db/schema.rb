@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_05_000000) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_05_020053) do
   create_table "expenditures", force: :cascade do |t|
     t.integer "user_id", null: false
     t.integer "year"
@@ -42,6 +42,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_05_000000) do
     t.string "password_digest"
   end
 
-  add_foreign_key "expenditures", "users"
+  add_foreign_key "expenditures", "users", primary_key: "user_id"
   add_foreign_key "expenses", "users", primary_key: "user_id"
 end

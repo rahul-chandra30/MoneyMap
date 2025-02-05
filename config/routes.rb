@@ -1,4 +1,7 @@
 Rails.application.routes.draw do
+  get "expenditures/create"
+  get "expenditures/update"
+  get "expenditures/show"
   get "expenses/new"
   get "expenses/create"
   get "expenses/update"
@@ -20,6 +23,7 @@ Rails.application.routes.draw do
 
   # Dashboard
   get 'dashboard', to: 'dashboard#index'
+  get 'dashboard/data', to: 'dashboard#data'
 
   # Profiles
   get "/profile", to: "profiles#show"
@@ -31,4 +35,11 @@ resources :expenses, only: [:new, :create]
   get '/expenses', to: 'expenses#new'
 
   get '/expenses/:year/:month', to: 'expenses#show'  
+
+  # Expenditure routes
+  resources :expenditures, only: [:create, :update, :show]
+  get '/expenditures/:year/:month', to: 'expenditures#show'
+  
+  # Clean up expense routes
+  resources :expenses, only: [:new, :create]
 end

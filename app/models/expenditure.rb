@@ -1,6 +1,5 @@
 class Expenditure < ApplicationRecord
-  def change
-    remove_foreign_key :expenditures, :users
-    add_foreign_key :expenditures, :users, primary_key: :user_id
-  end
+  belongs_to :user, foreign_key: :user_id, primary_key: :user_id
+  validates :year, :month, :income, presence: true
+  validates :income, numericality: { greater_than_or_equal_to: 0 }
 end
