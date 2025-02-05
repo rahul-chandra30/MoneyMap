@@ -264,7 +264,7 @@
   <div class="mb-4">
     <label>Year: </label>
     <%= select_tag :year, 
-        options_for_select((2024..2030).to_a, selected: params[:year]),
+        options_for_select((2025..2030).to_a, selected: params[:year]),
         class: "imput rounded-lg",
         onchange: "updateMonth()" %>
   </div>
@@ -272,10 +272,10 @@
   <!-- Month Selection -->
   <div class="mb-4">
   <label>Month: </label>
-  <%= select_tag :month, 
-      options_for_select(Date::MONTHNAMES.compact, selected: params[:month]),
-      class: "imput rounded-lg",
-      onchange: "loadExistingData()" %>
+<%= select_tag :month, 
+    options_for_select(Date::MONTHNAMES.compact, selected: params[:month]),
+    class: "imput rounded-lg",
+    onchange: "loadExistingData()" %>
     </div>
   <!-- Income Field -->
   <div class="mb-4">
@@ -377,12 +377,12 @@ function saveExpenses() {
     }
   });
 
-  fetch('<%= expenses_path %>', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
-    },
+fetch('<%= expenses_path %>', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content // Corrected line
+  },
     body: JSON.stringify({
       year: year,
       month: month,
@@ -406,6 +406,20 @@ function saveExpenses() {
   .catch(error => {
     showToast("Network error: " + error.message, "error");
   });
+}
+
+function showToast(message, type) {
+  const toast = document.querySelector('.toast');
+  if (toast) {
+    toast.textContent = message; // Set the message
+    toast.classList.remove('success', 'error'); // Remove previous classes
+    toast.classList.add(type); // Add the correct class
+    toast.classList.add('show'); // Show the toast
+
+    setTimeout(() => {
+      toast.classList.remove('show');
+    }, 3000); // Hide after 3 seconds
+  }
 }
 
 function loadExistingData() {

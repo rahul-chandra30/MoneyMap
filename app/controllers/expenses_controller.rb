@@ -33,17 +33,18 @@ class ExpensesController < ApplicationController
     }
   end
 
-  def new
-    @year = params[:year] || Date.today.year # Default to current year
-    @month = params[:month] || Date.today.month.to_s # Default to current month
+def new
+  @year = params[:year] || Date.today.year
+  # Use Date.today.strftime("%B") to get the full month name
+  @month = params[:month] || Date.today.strftime("%B") # Change this line
 
-    month_number = Date::MONTHNAMES.index(@month)
+  month_number = Date::MONTHNAMES.index(@month)
 
-    @existing_expenses = current_user.expenses.where(year: @year, month: month_number)
+  @existing_expenses = current_user.expenses.where(year: @year, month: month_number)
 
-    expenditure = current_user.expenditures.find_by(year: @year, month: month_number)
-    @income_value = expenditure&.income || 0  # Use &. to avoid nil errors
-  end
+  expenditure = current_user.expenditures.find_by(year: @year, month: month_number)
+  @income_value = expenditure&.income || 0
+end
 
   def create
     month_number = Date::MONTHNAMES.index(params[:month])

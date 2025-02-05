@@ -7,8 +7,8 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Sign Up routes
-  get 'signup', to: 'signup#index'
-  post 'signup', to: 'signup#create'
+ post '/signup', to: 'users#create' 
+  get '/signup', to: 'users#new'
 
   # Sign In routes
   get 'signin', to: 'signin#new'
