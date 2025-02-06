@@ -10,7 +10,7 @@ Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Sign Up routes
- post '/signup', to: 'users#create' 
+  post '/signup', to: 'users#create' 
   get '/signup', to: 'users#new'
 
   # Sign In routes
@@ -30,15 +30,13 @@ Rails.application.routes.draw do
   patch "/profile", to: "profiles#update"
 
   # ExpensesController
-resources :expenses, only: [:new, :create]
-
+  resources :expenses, only: [:new, :create]
   get '/expenses', to: 'expenses#new'
-
-  get '/expenses/:year/:month', to: 'expenses#show'  
+  get '/expenses/show', to: 'expenses#show'
 
   # Expenditure routes
+  get '/expenditures/show', to: 'expenditures#show'
   resources :expenditures, only: [:create, :update, :show]
-  get '/expenditures/:year/:month', to: 'expenditures#show'
   
   # Clean up expense routes
   resources :expenses, only: [:new, :create]

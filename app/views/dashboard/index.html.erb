@@ -168,11 +168,19 @@
   </header>
 
   <!-- Sidebar -->
- <aside class="sidebar">
-  <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'active' : ''}" %>
-  <%= link_to "Enter / Edit Spends", expenses_path, class: "#{current_page?(expenses_path) ? 'active' : ''}" %>
-  <a href="#">Saving Goals</a>
-  <a href="#">Dynamic Budget Allocator</a>
+<aside class="sidebar">
+  <%= link_to "Dashboard", 
+      dashboard_path, 
+      class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
+      onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
+  
+  <%= link_to "Enter / Edit Spends", 
+      expenses_path, 
+      class: "#{current_page?(expenses_path) ? 'active' : ''}", 
+      onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
+  
+  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Saving Goals</a>
+  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Dynamic Budget Allocator</a>
 </aside>
 
   <!-- Main Content -->
@@ -220,6 +228,7 @@
     });
 
     function fetchDashboardData() {
+      console.log("Fetching dashboard data...");
       const year = document.getElementById('year').value;
       const month = document.getElementById('month').value;
       
@@ -234,36 +243,38 @@
         updateDashboard(data);
       })
       .catch(error => console.error('Error:', error));
+
+       console.log("Dashboard data updated.");
     }
 
     function updateDashboard(data) {
-      // Format numbers with commas for Indian format
-      document.getElementById('total-income').textContent = 
-        `₹${parseInt(data.total_income).toLocaleString('en-IN')}`;
-      document.getElementById('total-expenses').textContent = 
-        `₹${parseInt(data.total_expenses).toLocaleString('en-IN')}`;
-      
-      // Calculate actual savings (can be negative)
-      const savings = data.total_income - data.total_expenses;
-      const savingsElement = document.getElementById('total-savings');
-      
-      // Format savings and set color
-      savingsElement.textContent = `₹${parseInt(savings).toLocaleString('en-IN')}`;
-      savingsElement.className = `amount ${savings >= 0 ? 'positive' : 'negative'}`;
+    // Format numbers with commas for Indian format
+    document.getElementById('total-income').textContent = 
+      `₹${parseInt(data.total_income).toLocaleString('en-IN')}`;
+    document.getElementById('total-expenses').textContent = 
+      `₹${parseInt(data.total_expenses).toLocaleString('en-IN')}`;
 
-      // Update expense breakdown
-      const container = document.getElementById('expense-container');
-      container.innerHTML = '';
-      
-      data.expenses.forEach(expense => {
-        const div = document.createElement('div');
-        div.className = 'expense-item';
-        div.innerHTML = 
+    // Update savings with proper formatting
+    const savingsElement = document.getElementById('total-savings');
+    const displaySavings = Math.max(data.total_income - data.total_expenses, 0);
+    savingsElement.textContent = `₹${parseInt(displaySavings).toLocaleString('en-IN')}`;
+
+    // Update savings color based on status
+    savingsElement.className = `amount ${data.savings_status}`;
+
+    // Update expense breakdown
+    const container = document.getElementById('expense-container');
+    container.innerHTML = '';
+    data.expenses.forEach(expense => {
+      const div = document.createElement('div');
+      div.className = 'expense-item';
+      div.innerHTML = 
         `<strong>${expense.category}  →  </strong>
-          <span>₹${parseInt(expense.amount_spent).toLocaleString('en-IN')}</span>`;
-        container.appendChild(div);
-      });
+         <span>₹${parseInt(expense.amount_spent).toLocaleString('en-IN')}</span>`;
+      container.appendChild(div);
+    });
     }
   </script>
+  
 </body>
 </html>

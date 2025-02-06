@@ -11,25 +11,39 @@ class DashboardController < ApplicationController
     month = params[:month]
     month_number = Date::MONTHNAMES.index(month)
 
-    expenditure = current_user.expenditures.find_by(year: year, month: month_number)
-    expenses = current_user.expenses.where(year: year, month: month_number)
-    
-    total_income = expenditure&.income || 0
+    # Get income from expenditures table
+    expenditure = current_user.expenditures.find_by(year: year.to_i, month: month_number)
+
+    # Get expenses from expenses table
+    expenses = current_user.expenses.where(year: year.to_i, month: month_number)
+
+    total_income = expenditure&.income.to_i
     total_expenses = expenses.sum(:amount_spent)
-    savings = [total_income - total_expenses, 0].max # Ensure savings is never negative
-    
+    savings = total_income - total_expenses
+
     response = {
-      total_income: total_income,
-      total_expenses: total_expenses,
-      savings: savings,
-      expenses: expenses.map do |expense|
-        {
-          category: expense.category,
-          amount_spent: expense.amount_spent
-        }
-      end
+        total_income: total_income,
+        total_expenses: total_expenses,
+        savings: savings >= 0 ? savings : 0,
+        savings_status: get_savings_status(savings),
+        expenses: expenses.map { |e| {
+            category: e.category,
+            amount_spent: e.amount_spent
+        }}
     }
-    
+
     render json: response
+  end
+
+  private
+
+  def get_savings_status(savings)
+    if savings > 0
+      'positive'
+    elsif savings == 0
+      'zero'
+    else
+      'negative'
+    end
   end
 end

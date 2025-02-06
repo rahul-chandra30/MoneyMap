@@ -8,17 +8,23 @@ class ExpensesController < ApplicationController
     @expenses = current_user.expenses.where(year: @year, month: month_number)
   end
 
+  def show
+    month_number = Date::MONTHNAMES.index(params[:month])
+    expenses = current_user.expenses.where(year: params[:year], month: month_number)
+    render json: { expenses: expenses.map { |e| { category: e.category, amount_spent: e.amount_spent } } }
+  end
+
   def create
     ActiveRecord::Base.transaction do
       month_number = Date::MONTHNAMES.index(params[:month])
       
-      # Delete existing expenses
+      # Deletetion of existing expenses
       current_user.expenses.where(
         year: params[:year],
         month: month_number
       ).delete_all
 
-      # Create new expenses
+      # Creation of new expenses
       params[:expenses].each do |expense|
         current_user.expenses.create!(
           year: params[:year],

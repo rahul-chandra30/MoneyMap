@@ -10,19 +10,25 @@ class ExpendituresController < ApplicationController
     render json: { income: expenditure&.income || 0 }
   end
 
+  def show
+    month_number = Date::MONTHNAMES.index(params[:month])
+    expenditure = current_user.expenditures.find_by(year: params[:year], month: month_number)
+    render json: { income: expenditure&.income || 0 }
+  end
+
   def create
     month_number = Date::MONTHNAMES.index(params[:month])
     expenditure = current_user.expenditures.find_or_initialize_by(
-      year: params[:year],
-      month: month_number
+        year: params[:year],
+        month: month_number
     )
     expenditure.income = params[:income]
 
     if expenditure.save
-      render json: { success: true, message: "Income saved successfully" }
+        render json: { success: true, message: "Income saved successfully" }
     else
-      render json: { success: false, error: expenditure.errors.full_messages }, 
-             status: :unprocessable_entity
+        render json: { success: false, error: expenditure.errors.full_messages }, 
+               status: :unprocessable_entity
     end
   end
 
