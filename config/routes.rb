@@ -1,43 +1,41 @@
 Rails.application.routes.draw do
-  get "expenditures/create"
-  get "expenditures/update"
-  get "expenditures/show"
-  get "expenses/new"
-  get "expenses/create"
-  get "expenses/update"
-  get "profiles/show"
-  get "profiles/update"
+  # Health check
   get "up" => "rails/health#show", as: :rails_health_check
-
-  # Sign Up routes
-  post '/signup', to: 'users#create' 
-  get '/signup', to: 'users#new'
-
-  # Sign In routes
-  get 'signin', to: 'signin#new'
-  post 'signin', to: 'signin#create'
-  delete 'signout', to: 'signin#destroy'
 
   # Root path
   root 'signup#index'
 
-  # Dashboard
-  get 'dashboard', to: 'dashboard#index'
-  get 'dashboard/data', to: 'dashboard#data'
+  ## ========= User Authentication ========= ##
+  get '/signup', to: 'users#new', as: :signup
+  post '/signup', to: 'users#create'
 
-  # Profiles
-  get "/profile", to: "profiles#show"
+  get '/signin', to: 'signin#new', as: :signin
+  post '/signin', to: 'signin#create'
+  delete '/signout', to: 'signin#destroy', as: :signout
+
+  ## ========= User Dashboard ========= ##
+  get '/dashboard', to: 'dashboard#index', as: :dashboard
+  get '/dashboard/data', to: 'dashboard#data'
+
+  ## ========= Profiles ========= ##
+  get "/profile", to: "profiles#show", as: :profile
   patch "/profile", to: "profiles#update"
 
-  # ExpensesController
-  resources :expenses, only: [:new, :create]
+  ## ========= Expenses ========= ##
+  resources :expenses, only: [:new, :create, :show]
   get '/expenses', to: 'expenses#new'
-  get '/expenses/show', to: 'expenses#show'
 
-  # Expenditure routes
-  get '/expenditures/show', to: 'expenditures#show'
+  ## ========= Expenditures ========= ##
   resources :expenditures, only: [:create, :update, :show]
-  
-  # Clean up expense routes
-  resources :expenses, only: [:new, :create]
+
+  ## ========= Expert Authentication ========= ##
+  get '/experts/signup', to: 'experts#new', as: :expert_signup
+  post '/experts/signup', to: 'experts#create'
+  get '/experts/signin', to: 'experts#login', as: :expert_signin  
+  post '/experts/signin', to: 'experts#authenticate' 
+  delete '/experts/signout', to: 'experts#logout', as: :expert_signout
+
+  ## ========= Expert Dashboard ========= ##
+  get 'expert_dashboard', to: 'experts#dashboard'
+  get '/experts/:id/edit', to: 'experts#edit', as: 'edit_expert'
 end
