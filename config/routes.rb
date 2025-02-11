@@ -29,13 +29,20 @@ Rails.application.routes.draw do
   resources :expenditures, only: [:create, :update, :show]
 
   ## ========= Expert Authentication ========= ##
-  get '/experts/signup', to: 'experts#new', as: :expert_signup
-  post '/experts/signup', to: 'experts#create'
-  get '/experts/signin', to: 'experts#login', as: :expert_signin  
-  post '/experts/signin', to: 'experts#authenticate' 
-  delete '/experts/signout', to: 'experts#logout', as: :expert_signout
+  get 'expert_signup', to: 'experts#new'
+  post 'expert_signup', to: 'experts#create'
+  get 'expert_signin', to: 'experts#login'
+  post 'expert_signin', to: 'experts#authenticate'  # This needs to match the form action
+  delete 'expert_signout', to: 'experts#logout', as: :expert_signout
 
   ## ========= Expert Dashboard ========= ##
   get 'expert_dashboard', to: 'experts#dashboard'
   get '/experts/:id/edit', to: 'experts#edit', as: 'edit_expert'
+
+  # Expert routes
+  resources :experts do
+    member do
+      patch 'update_profile'
+    end
+  end
 end

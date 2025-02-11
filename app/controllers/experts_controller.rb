@@ -1,4 +1,7 @@
 class ExpertsController < ApplicationController
+  before_action :set_expert, only: [:update_profile]
+  before_action :authenticate_expert!, except: [:new, :create, :login, :authenticate]
+
   def new
     @expert = Expert.new
   end
@@ -7,10 +10,10 @@ class ExpertsController < ApplicationController
     @expert = Expert.new(expert_params)
     if @expert.save
       session[:expert_id] = @expert.id
-      flash[:notice] = "Sign-up successful! You are now logged in."
-      redirect_to dashboard_path # Redirect to expert dashboard
+      flash[:notice] = "Welcome to MoneyMap Expert Portal!"
+      redirect_to expert_dashboard_path
     else
-      flash[:alert] = "Sign-up failed. Please check the form."
+      flash.now[:alert] = "Sign-up failed: #{@expert.errors.full_messages.join(', ')}"
       render :new
     end
   end
@@ -19,18 +22,21 @@ class ExpertsController < ApplicationController
   end
 
   def dashboard
-  @expert = Expert.find_by(id: session[:expert_id]) # Adjust based on authentication
-  redirect_to signin_path, alert: "Please sign in" unless @expert
-  end 
+    @expert = Expert.find_by(id: session[:expert_id])
+    unless @expert
+      flash[:alert] = "Please sign in as an expert"
+      redirect_to expert_signin_path
+    end
+  end
 
   def authenticate
     expert = Expert.find_by(email: params[:email])
-    if expert && expert.authenticate(params[:password])
+    if expert&.authenticate(params[:password])
       session[:expert_id] = expert.id
-      flash[:notice] = "Sign-in successful!"
-      redirect_to expert_dashboard_path
+      flash[:notice] = "Welcome back, #{expert.name}!"
+      redirect_to expert_dashboard_path and return
     else
-      flash[:alert] = "Invalid email or password."
+      flash.now[:alert] = "Invalid email or password"
       render :login
     end
   end
@@ -41,9 +47,23 @@ class ExpertsController < ApplicationController
     redirect_to root_path
   end
 
+  def update_profile
+    if @expert.update(expert_params)
+      flash[:notice] = "Profile updated successfully"
+      redirect_to expert_dashboard_path
+    else
+      flash[:alert] = "Failed to update profile: #{@expert.errors.full_messages.join(', ')}"
+      redirect_to expert_dashboard_path
+    end
+  end
+
   private
 
   def expert_params
     params.require(:expert).permit(:name, :email, :password, :phone)
+  end
+
+  def set_expert
+    @expert = Expert.find(session[:expert_id])
   end
 end

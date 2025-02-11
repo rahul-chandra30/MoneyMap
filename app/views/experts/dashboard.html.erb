@@ -169,7 +169,7 @@
     .detail-card button {
       background-color: #059669;
       color: white;
-      padding: 10px;
+      padding: 12px;
       border: none;
       border-radius: 5px;
       cursor: pointer;
@@ -177,6 +177,18 @@
     }
     .detail-card button:hover {
       background-color: #047857;
+    }
+
+      .save-btn {
+      background-color: #10B981;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+      .save-btn:hover {
+      background-color: #059669;
     }
     
     .positive { color: #059669; }
@@ -208,31 +220,117 @@
       class: "#{current_page?(expert_dashboard_path) ? 'active' : ''}", 
       onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>  
   <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Bookings</a>
-  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Live Cat</a>
+  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Live Chat</a>
 </aside>
 
   <!-- Main Content -->
   <main class="content">
+
     <h1>Welcome Expert, <%= current_expert.name %></h1>
      <!-- Editable Detail Card -->
-    <div class="detail-card">
+  <div class="detail-card">
       <h2>Profile Details</h2>
-      <%= form_with model: @expert, url: profile_path, method: :patch do |f| %>
-        <label for="name">Name</label>
-        <%= f.text_field :name, value: @expert.name %>
+      <button onclick="toggleEdit()" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 ">
+      Edit Profile
+    </button>
 
-        <label for="email">Email</label>
-        <%= f.text_field :email, value: @expert.email %>
 
-        <label for="phone">Phone</label>
-        <%= f.text_field :phone, value: @expert.phone %>
+  <%= form_with model: @expert,  
+            url: update_profile_expert_path(@expert), 
+            method: :patch,
+            local: true, 
+            class: "space-y-6", 
+            id: "expert-form" do |f| %>
+    
+      <div class="grid grid-cols-2 gap-8">
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Name</label>
+        <div class="view-mode"><%= @expert.name %></div>
+        <%= f.text_field :name, class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
 
-        <button type="submit">Save</button>
-      <% end %>
-  
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <div class="view-mode"><%= @expert.email %></div>
+        <%= f.email_field :email, class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Age</label>
+        <div class="view-mode"><%= @expert.age || "Not specified" %></div>
+        <%= f.number_field :age, class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Gender</label>
+        <div class="view-mode"><%= @expert.gender || "Not specified" %></div>
+        <%= f.select :gender, ['Male', 'Female', 'Other'], 
+            { include_blank: 'Select Gender' }, 
+            class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Experience (years)</label>
+        <div class="view-mode"><%= @expert.experience || "Not specified" %></div>
+        <%= f.number_field :experience, class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700">Designation</label>
+      <div class="view-mode"><%= @expert.designation || "Not specified" %></div>
+      <%= f.text_field :designation, 
+        class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+    </div>
+
+      <div>
+        <label class="block text-sm font-medium text-gray-700">Charges per Session (₹)</label>
+        <div class="view-mode"><%= @expert.charges_per_session ? "₹#{@expert.charges_per_session}" : "Not specified" %></div>
+        <%= f.number_field :charges_per_session, step: '0.01', class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+      </div>
+
+      <div>
+      <label class="block text-sm font-medium text-gray-700">About</label>
+      <div class="view-mode"><%= @expert.about || "Not specified" %></div>
+      <%= f.text_area :about, rows: 4, class: "edit-mode hidden mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" %>
+      </div>
+
+  <div class="edit-mode hidden flex justify-end space-x-4">
+    <button type="button" onclick="toggleEdit()" 
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+      Cancel
+    </button>
+    <%= f.submit "Save Changes", 
+        class: "save-btn px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50" %>
+  </div>
+    <% end %>
+    </div>
+  </div>
   </main>
 
+<script>
 
+  function toggleEdit() {
+    const viewModes = document.querySelectorAll('.view-mode');
+    const editModes = document.querySelectorAll('.edit-mode');
   
+    viewModes.forEach(el => el.classList.toggle('hidden'));
+    editModes.forEach(el => el.classList.toggle('hidden'));
+  }
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+    const notification = document.getElementById('notification');
+    if (notification) {
+      setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => {
+          notification.remove();
+        }, 500);
+      }, 3000);
+    }
+  });
+
+</script>
 </body>
 </html>
