@@ -7,7 +7,7 @@ class SigninController < ApplicationController
     
     if user&.authenticate(params[:password])
       Rails.logger.debug "Authentication successful"
-      session[:user_id] = user.user_id  # Changed from id to user_id
+      session[:user_id] = user.user_id 
       flash[:notice] = 'Successfully signed in!'
       redirect_to dashboard_path
     else

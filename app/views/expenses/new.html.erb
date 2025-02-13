@@ -292,6 +292,8 @@
     <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Saving Goals</a>
     <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Dynamic Budget Allocator</a>
   </aside>
+
+
   <!-- Main Content -->
 
   <main class="content">
@@ -316,6 +318,7 @@
       </div>
 
  <%= form_with(url: expenses_path, method: :post, local: true, id: "expense-form") do |f| %>
+
   <!-- Year Selection -->
   <div class="mb-4">
     <label>Year: </label>
@@ -384,7 +387,7 @@ document.addEventListener("DOMContentLoaded", function() {
   document.querySelector('input[name="income"]').addEventListener("input", validateExpenses);
 });
 
-// Enhanced loadExistingData with loading state
+// loadExistingData with loading state
 async function loadExistingData() {
     showLoader();
     const year = document.querySelector("select[name='year']").value;
@@ -396,30 +399,30 @@ async function loadExistingData() {
     }
 
     try {
-        // Fetch income data
+        // Fetching income data
         const incomeResponse = await fetch(`/expenditures/show?year=${year}&month=${month}`);
         if (!incomeResponse.ok) throw new Error("Failed to fetch income data");
         const incomeData = await incomeResponse.json();
 
-        // Fetch expense data
+        // Fetching expense data
         const expenseResponse = await fetch(`/expenses/show?year=${year}&month=${month}`);
         if (!expenseResponse.ok) throw new Error("Failed to fetch expense data");
         const expenseData = await expenseResponse.json();
 
-        // Populate income field
+        // Populating income field
         document.querySelector("input[name='income']").value = incomeData.income || '';
 
-        // Clear existing expense rows
+        // Clearing existing expense rows
         const container = document.getElementById("expenses-container");
         container.innerHTML = '';
 
-        // Populate expense rows
+        // Populating expense rows
         if (expenseData.expenses && expenseData.expenses.length > 0) {
             expenseData.expenses.forEach(expense => {
                 addNewExpenseRow(expense);
             });
         } else {
-            addNewExpenseRow(); // Add at least one default row which is not deletable
+            addNewExpenseRow(); 
         }
     } catch (error) {
         console.error("Error loading data:", error);

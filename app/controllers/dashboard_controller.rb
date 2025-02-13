@@ -17,10 +17,10 @@ class DashboardController < ApplicationController
     month = params[:month]
     month_number = Date::MONTHNAMES.index(month)
 
-    # Get income from expenditures table
+    # Geting income from expenditures table
     expenditure = current_user.expenditures.find_by(year: year.to_i, month: month_number)
 
-    # Get expenses from expenses table
+    # Geting expenses from expenses table
     expenses = current_user.expenses.where(year: year.to_i, month: month_number)
 
     total_income = expenditure&.income.to_i

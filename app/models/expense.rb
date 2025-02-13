@@ -8,7 +8,7 @@ class Expense < ApplicationRecord
     sum(:amount_spent)
   end
 
-  # Format amount before save
+  # Formating the amount before save
   before_save :format_amount
 
   private

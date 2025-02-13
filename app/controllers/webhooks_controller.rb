@@ -24,7 +24,6 @@ class WebhooksController < ApplicationController
   end
 
   def process_webhook_event(event)
-    # Implement your logic here
-    # Example: Update booking status for failed payments
+    
   end
 end
