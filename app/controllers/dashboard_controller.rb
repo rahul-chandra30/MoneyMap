@@ -1,9 +1,15 @@
 class DashboardController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_user!, only: [:index]
+  before_action :authenticate_expert!, only: [:expert]
 
   def index
     @year = params[:year] || Time.current.year
     @month = params[:month] || Time.current.strftime("%B")
+  end
+
+
+  def expert
+    # Expert dashboard logic
   end
 
   def data

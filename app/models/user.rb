@@ -1,6 +1,10 @@
 class User < ApplicationRecord
-  self.primary_key = 'user_id'
   has_secure_password
-  has_many :expenses, foreign_key: :user_id
-  has_many :expenditures, foreign_key: :user_id
-end 
+   has_many :bookings, foreign_key: 'user_id' 
+  has_many :expenses
+  has_many :expenditures
+  
+  validates :email, presence: true, uniqueness: true
+  validates :name, presence: true
+  validates :phone, presence: true
+end
