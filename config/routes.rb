@@ -39,10 +39,24 @@ Rails.application.routes.draw do
   get 'expert_dashboard', to: 'experts#dashboard'
   get '/experts/:id/edit', to: 'experts#edit', as: 'edit_expert'
 
+  ## ========= Expert Opinion ========= ##
+  get '/expert_opinion', to: 'expert_opinion#index', as: :expert_opinion
+
   # Expert routes
   resources :experts do
     member do
       patch 'update_profile'
     end
   end
+
+  ## ========= Payments ========= ##
+  resources :bookings, only: [:create, :index] do
+      collection do
+      post 'payment_callback'
+    end
+  end
+
+  # Razorpay webhook route
+  post '/razorpay_webhook', to: 'webhooks#razorpay'
+
 end

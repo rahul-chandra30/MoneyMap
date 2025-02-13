@@ -60,7 +60,18 @@ class ExpertsController < ApplicationController
   private
 
   def expert_params
-    params.require(:expert).permit(:name, :email, :password, :phone)
+    params.require(:expert).permit(
+      :name, 
+      :email, 
+      :password, 
+      :phone,
+      :age,
+      :gender,
+      :experience,
+      :designation,
+      :charges_per_session,
+      :about
+    )
   end
 
   def set_expert

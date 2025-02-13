@@ -1,5 +1,7 @@
 class Expert < ApplicationRecord
   has_secure_password
+  has_many :bookings
+
   validates :email, presence: true, uniqueness: true
   validates :name, :phone, presence: true
   validates :age, numericality: { only_integer: true, greater_than: 0 }, allow_nil: true
