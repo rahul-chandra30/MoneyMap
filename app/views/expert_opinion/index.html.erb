@@ -327,17 +327,20 @@
   <aside class="sidebar">
     <%= link_to "Dashboard", 
         dashboard_path, 
-        class: "#{current_page?(dashboard_path) ? 'active' : ''}" %>
+        class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
+        onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
     
     <%= link_to "Enter / Edit Spends", 
         expenses_path, 
-        class: "#{current_page?(expenses_path) ? 'active' : ''}" %>
+        class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
+        onclick: "setTimeout(function() { window.location.reload(); }, 100)"%>
     
     <%= link_to "Expert Opinion", 
         expert_opinion_path,
-        class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
+        class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
+        onclick: "setTimeout(function() { window.location.reload(); }, 100)"%>
     
-    <a href="#">Dynamic Budget Allocator</a>
+    <%= link_to "Live Chat 💬", chat_rooms_path, class: "#{current_page?(chat_rooms_path) ? 'active' : ''}" %>
   </aside>
 
   <!-- Main Content -->

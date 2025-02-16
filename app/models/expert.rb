@@ -9,4 +9,5 @@ class Expert < ApplicationRecord
   validates :experience, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validates :designation, length: { maximum: 100 }, allow_nil: true
   validates :charges_per_session, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
+  has_many :chat_rooms, foreign_key: :expert_id, dependent: :destroy
 end

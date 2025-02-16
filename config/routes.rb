@@ -59,4 +59,11 @@ Rails.application.routes.draw do
   # Razorpay webhook route
   post '/razorpay_webhook', to: 'webhooks#razorpay'
 
+  # Chat routes
+  mount ActionCable.server => '/cable'
+  resources :chat_rooms, only: [:index, :show] do
+  resources :messages, only: [:create]
+  
+  end
+
 end
