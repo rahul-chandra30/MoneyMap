@@ -45,60 +45,86 @@
   <main class="content">
     <h1>Chat with <%= @chat_room.expert.name %></h1>
     <div class="chat-window">
-              <div id="messages" data-chat-room-id="<%= @chat_room.id %>">
-            <% @messages.each do |message| %>
-              <div class="message">
-                <strong><%= message.sender.name %>:</strong>
-                <span><%= message.content %></span>
-                <small><%= message.created_at.strftime("%H:%M") %></small>
-              </div>
-            <% end %>
-          </div>
-        <%= form_with model: [@chat_room, Message.new], id: "message-form", remote: true do |form| %>
-          <%= form.text_field :content, id: "message-input", placeholder: "Type your message..." %>
-          <%= form.submit "Send", id: "send-button"
-           %>
+      <div id="messages" data-chat-room-id="<%= @chat_room.id %>">
+        <% @messages.each do |message| %>
+          <%= render partial: 'messages/message', locals: { message: message } %>
         <% end %>
+      </div>
+
+      <%= form_with(model: [@chat_room, Message.new], 
+                    id: "message-form", 
+                    class: "message-form",
+                    data: { remote: true }) do |form| %>
+        <div class="input-group">
+          <%= form.text_field :content, 
+              id: "message-input", 
+              class: "form-control",
+              placeholder: "Type your message...",
+              autocomplete: "off" %>
+          <%= form.submit "Send", 
+              id: "send-button",
+              class: "btn btn-primary" %>
+        </div>
+      <% end %>
+
     </div>
-  </main>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const messageForm = document.getElementById("message-form");
-    const messageInput = document.getElementById("message-input");
+    <%= javascript_tag do %>
+      document.addEventListener("DOMContentLoaded", () => {
+        const messageForm = document.getElementById("message-form");
+        const messageInput = document.getElementById("message-input");
+        const messages = document.getElementById("messages");
+        const chatRoomId = messages.dataset.chatRoomId;
 
-    messageForm.addEventListener("submit", (event) => {
-      event.preventDefault();
-
-      const content = messageInput.value.trim();
-      if (content === "") return;
-
-      // Get sender type and ID based on who is logged in
-      const senderType = "<%= current_user ? 'User' : 'Expert' %>";
-      const senderId = "<%= current_user ? current_user.id : current_expert.id %>";
-      const chatRoomId = document.getElementById("messages").dataset.chatRoomId;
-
-      fetch(`/chat_rooms/${chatRoomId}/messages`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
-        },
-        body: JSON.stringify({
-          message: {
-            content: content,
-            sender_type: senderType,
-            sender_id: senderId
+        // Set up ActionCable subscription
+        const subscription = consumer.subscriptions.create(
+          { channel: "ChatChannel", room: chatRoomId },
+          {
+            connected() {
+              console.log("Connected to chat room!");
+            },
+            received(data) {
+              messages.insertAdjacentHTML('beforeend', data.message);
+              messages.scrollTop = messages.scrollHeight;
+            }
           }
-        })
-      })
-      .then(response => {
-        if (response.ok) messageInput.value = "";
-      })
-      .catch(error => console.error("Error:", error));
-    });
-  });
-</script>
+        );
 
+        // Handle form submission
+        messageForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+
+          const content = messageInput.value.trim();
+          if (!content) return;
+
+          try {
+            const response = await fetch(messageForm.action, {
+              method: 'POST',
+              headers: {
+                'X-CSRF-Token': document.querySelector("[name='csrf-token']").content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+              },
+              body: JSON.stringify({
+                message: {
+                  content: content
+                }
+              })
+            });
+
+            if (response.ok) {
+              messageInput.value = '';
+              messageInput.focus();
+            }
+          } catch (error) {
+            console.error('Error:', error);
+          }
+        });
+
+        // Initial scroll to bottom
+        messages.scrollTop = messages.scrollHeight;
+      });
+    <% end %>
+  </main>
 </body>
 </html>

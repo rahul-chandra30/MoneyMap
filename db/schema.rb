@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_15_111539) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_16_003533) do
   create_table "bookings", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "user_name", null: false
@@ -76,6 +76,23 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_15_111539) do
     t.string "designation"
   end
 
+  create_table "group_chats", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "group_messages", force: :cascade do |t|
+    t.integer "group_chat_id", null: false
+    t.string "sender_type", null: false
+    t.integer "sender_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_chat_id"], name: "index_group_messages_on_group_chat_id"
+    t.index ["sender_type", "sender_id"], name: "index_group_messages_on_sender"
+  end
+
   create_table "messages", force: :cascade do |t|
     t.integer "chat_room_id", null: false
     t.string "sender_type", null: false
@@ -102,5 +119,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_15_111539) do
   add_foreign_key "chat_rooms", "users", primary_key: "user_id"
   add_foreign_key "expenditures", "users", primary_key: "user_id"
   add_foreign_key "expenses", "users", primary_key: "user_id"
+  add_foreign_key "group_messages", "group_chats"
   add_foreign_key "messages", "chat_rooms"
 end

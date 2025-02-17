@@ -30,6 +30,12 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def authenticate_user_or_expert!
+    unless current_user || current_expert
+      redirect_to signin_path, alert: "Please sign in to continue"
+    end
+  end
+
   private
 
   def current_expert

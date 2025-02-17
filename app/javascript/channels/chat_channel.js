@@ -1,26 +1,36 @@
 import consumer from "./consumer"
 
-consumer.subscriptions.create({ channel: "ChatChannel", room: document.getElementById("messages").dataset.chatRoomId }, {
+document.addEventListener("DOMContentLoaded", () => {
+  const messages = document.getElementById("messages")
+  if (messages) {
+    const chatRoomId = messages.dataset.chatRoomId
 
-  
-  connected() {
-    console.log("Connected to the chat room!");
-  },
+    consumer.subscriptions.create(
+      {
+        channel: "ChatChannel",
+        room: chatRoomId
+      },
+      {
+        connected() {
+          console.log("Connected to ChatChannel!")
+        },
 
-  disconnected() {
-    console.log("Disconnected from the chat room.");
-  },
+        disconnected() {
+          console.log("Disconnected from ChatChannel")
+        },
 
-  received(data) {
-    const messages = document.getElementById("messages");
-    const messageElement = document.createElement("div");
-    messageElement.classList.add("message");
-    messageElement.innerHTML = `
-      <strong>${data.sender}:</strong>
-      <span>${data.content}</span>
-      <small>${data.timestamp}</small>
-    `;
-    messages.appendChild(messageElement);
-    messages.scrollTop = messages.scrollHeight;
+        received(data) {
+          const messageContainer = document.createElement("div")
+          messageContainer.classList.add("message")
+          messageContainer.innerHTML = `
+            <strong>${data.sender}:</strong>
+            <span>${data.content}</span>
+            <small>${data.timestamp}</small>
+          `
+          messages.appendChild(messageContainer)
+          messages.scrollTop = messages.scrollHeight
+        }
+      }
+    )
   }
-});
+})
