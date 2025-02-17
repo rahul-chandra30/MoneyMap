@@ -1,4 +1,16 @@
-ActiveRecord::Schema[8.0].define(version: 2025_02_13_031907) do
+# This file is auto-generated from the current state of the database. Instead
+# of editing this file, please use the migrations feature of Active Record to
+# incrementally modify your database, and then regenerate this schema definition.
+#
+# This file is the source Rails uses to define your schema when running `bin/rails
+# db:schema:load`. When creating a new database, `bin/rails db:schema:load` tends to
+# be faster and is potentially less error prone than running all of your
+# migrations from scratch. Old migrations may fail to apply correctly if those
+# migrations use external dependencies or application code.
+#
+# It's strongly recommended that you check this file into your version control system.
+
+ActiveRecord::Schema[8.0].define(version: 2025_02_17_100002) do
   create_table "bookings", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "user_name", null: false
@@ -17,6 +29,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_13_031907) do
     t.index ["booking_id"], name: "index_bookings_on_booking_id", unique: true
     t.index ["expert_id"], name: "index_bookings_on_expert_id"
     t.index ["user_id"], name: "index_bookings_on_user_id"
+  end
+
+  create_table "chat_rooms", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.integer "expert_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["expert_id"], name: "index_chat_rooms_on_expert_id"
+    t.index ["user_id"], name: "index_chat_rooms_on_user_id"
   end
 
   create_table "expenditures", force: :cascade do |t|
@@ -55,6 +76,34 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_13_031907) do
     t.string "designation"
   end
 
+  create_table "group_chats", force: :cascade do |t|
+    t.string "name"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "group_messages", force: :cascade do |t|
+    t.integer "group_chat_id", null: false
+    t.string "sender_type", null: false
+    t.integer "sender_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["group_chat_id"], name: "index_group_messages_on_group_chat_id"
+    t.index ["sender_type", "sender_id"], name: "index_group_messages_on_sender"
+  end
+
+  create_table "messages", force: :cascade do |t|
+    t.integer "chat_room_id", null: false
+    t.string "sender_type", null: false
+    t.integer "sender_id", null: false
+    t.text "content", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["chat_room_id"], name: "index_messages_on_chat_room_id"
+    t.index ["sender_type", "sender_id"], name: "index_messages_on_sender"
+  end
+
   create_table "users", primary_key: "user_id", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -67,6 +116,10 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_13_031907) do
 
   add_foreign_key "bookings", "experts"
   add_foreign_key "bookings", "users", primary_key: "user_id"
+  add_foreign_key "chat_rooms", "experts"
+  add_foreign_key "chat_rooms", "users", primary_key: "user_id"
   add_foreign_key "expenditures", "users", primary_key: "user_id"
   add_foreign_key "expenses", "users", primary_key: "user_id"
+  add_foreign_key "group_messages", "group_chats"
+  add_foreign_key "messages", "chat_rooms"
 end

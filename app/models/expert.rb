@@ -1,6 +1,9 @@
 class Expert < ApplicationRecord
   has_secure_password
   has_many :bookings
+  has_many :chat_rooms
+  has_many :users, through: :chat_rooms
+  has_many :messages, as: :sender
 
   validates :email, presence: true, uniqueness: true
   validates :name, :phone, presence: true

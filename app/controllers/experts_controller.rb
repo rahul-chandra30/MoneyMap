@@ -10,6 +10,7 @@ class ExpertsController < ApplicationController
     @expert = Expert.new(expert_params)
     if @expert.save
       session[:expert_id] = @expert.id
+      cookies.signed[:expert_id] = @expert.id  # Add this for ActionCable
       flash[:notice] = "Welcome to MoneyMap Expert Portal!"
       redirect_to expert_dashboard_path
     else
@@ -33,6 +34,7 @@ class ExpertsController < ApplicationController
     expert = Expert.find_by(email: params[:email])
     if expert&.authenticate(params[:password])
       session[:expert_id] = expert.id
+      cookies.signed[:expert_id] = expert.id  # Add this for ActionCable
       flash[:notice] = "Welcome back, #{expert.name}!"
       redirect_to expert_dashboard_path and return
     else
@@ -43,6 +45,7 @@ class ExpertsController < ApplicationController
 
   def logout
     session[:expert_id] = nil
+    cookies.delete(:expert_id)  # Add this for ActionCable
     flash[:notice] = "Signed out successfully."
     redirect_to root_path
   end

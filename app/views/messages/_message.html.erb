@@ -1,0 +1,6 @@
+<div class="message <%= message.sender == current_user_or_expert ? 'sent' : 'received' %>">
+  <div class="message-content">
+    <p><%= message.content %></p>
+    <small><%= message.created_at.in_time_zone('Asia/Kolkata').strftime("%I:%M %p") %></small>
+  </div>
+</div>

@@ -32,7 +32,7 @@ Rails.application.routes.draw do
   get 'expert_signup', to: 'experts#new'
   post 'expert_signup', to: 'experts#create'
   get 'expert_signin', to: 'experts#login'
-  post 'expert_signin', to: 'experts#authenticate'  # This needs to match the form action
+  post 'expert_signin', to: 'experts#authenticate'  
   delete 'expert_signout', to: 'experts#logout', as: :expert_signout
 
   ## ========= Expert Dashboard ========= ##
@@ -59,4 +59,13 @@ Rails.application.routes.draw do
   # Razorpay webhook route
   post '/razorpay_webhook', to: 'webhooks#razorpay'
 
+  # Chat routes
+  get 'user/chat', to: 'chat_rooms#user_chat', as: 'user_chat'
+  get 'expert/chat', to: 'chat_rooms#expert_chat', as: 'expert_chat'
+  post 'chat_rooms/create_or_find', to: 'chat_rooms#create_or_find'
+  resources :chat_rooms, only: [] do
+    resources :messages, only: [:create]
+  end
+
+  mount ActionCable.server => '/cable'
 end
