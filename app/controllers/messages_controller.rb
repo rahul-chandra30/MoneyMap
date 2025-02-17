@@ -8,7 +8,7 @@ class MessagesController < ApplicationController
   @message.sender = current_user || current_expert
 
   if @message.save
-    puts "Sender: #{@message.sender.name}" # Debugging line
+    puts "Sender: #{@message.sender.name}" 
     ActionCable.server.broadcast("chat_room_#{@chat_room.id}", {
       sender: @message.sender.name,
       content: @message.content,

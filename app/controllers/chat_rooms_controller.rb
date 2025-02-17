@@ -3,11 +3,11 @@ class ChatRoomsController < ApplicationController
 
 def index
   if current_user
-    puts "Current user: #{current_user.name}" # Debugging line
+    puts "Current user: #{current_user.name}" 
     @chat_partners = Expert.all
     @chat_rooms = current_user.chat_rooms.includes(:expert, :messages).order(updated_at: :desc)
   elsif current_expert
-    puts "Current expert: #{current_expert.name}" # Debugging line
+    puts "Current expert: #{current_expert.name}" 
     @chat_partners = User.all
     @chat_rooms = current_expert.chat_rooms.includes(:user, :messages).order(updated_at: :desc)
   else

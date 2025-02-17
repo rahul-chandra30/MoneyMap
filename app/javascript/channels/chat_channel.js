@@ -1,6 +1,8 @@
 import consumer from "./consumer"
 
 consumer.subscriptions.create({ channel: "ChatChannel", room: document.getElementById("messages").dataset.chatRoomId }, {
+
+  
   connected() {
     console.log("Connected to the chat room!");
   },
