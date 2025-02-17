@@ -59,4 +59,13 @@ Rails.application.routes.draw do
   # Razorpay webhook route
   post '/razorpay_webhook', to: 'webhooks#razorpay'
 
+  ## ========= Live Chat ========= ##
+  resources :chat_rooms, only: [:index, :show, :create] do
+    resources :messages, only: [:create]
+  end
+  
+  get 'expert/chat', to: 'chat_rooms#expert_chat', as: 'expert_chat'
+  get 'user/chat', to: 'chat_rooms#user_chat', as: 'user_chat'
+  
+  mount ActionCable.server => '/cable'
 end

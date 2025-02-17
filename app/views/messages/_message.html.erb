@@ -1,0 +1,7 @@
+<div class="message <%= message.sender == (current_user || current_expert) ? 'sent' : 'received' %>">
+  <div class="message-content">
+    <strong><%= message.sender.name %></strong>
+    <p><%= message.content %></p>
+    <small><%= message.created_at.strftime("%H:%M") %></small>
+  </div>
+</div>

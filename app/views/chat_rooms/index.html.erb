@@ -1,0 +1,24 @@
+<div class="message <%= message.sender == current_user ? 'sent' : 'received' %>">
+  <strong><%= message.sender.name %>:</strong>
+  <p><%= message.content %></p>
+  <small><%= message.created_at.strftime("%H:%M") %></small>
+</div>iv class="available-experts">
+      <h2>Available Experts</h2>
+      <% @available_experts.each do |expert| %>
+        <%= form_with(model: ChatRoom.new) do |f| %>
+          <%= f.hidden_field :expert_id, value: expert.id %>
+          <%= f.submit "Chat with #{expert.name}" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <div class="existing-chats">
+    <h2>Your Conversations</h2>
+    <% @chat_rooms.each do |room| %>
+      <%= link_to chat_room_path(room) do %>
+        Chat with <%= current_user ? room.expert.name : room.user.name %>
+      <% end %>
+    <% end %>
+  </div>
+</div>

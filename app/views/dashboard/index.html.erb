@@ -178,11 +178,14 @@
       expenses_path, 
       class: "#{current_page?(expenses_path) ? 'active' : ''}", 
       onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
-  
   <%= link_to "Expert Opinion", 
       expert_opinion_path,
       class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
-  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Dynamic Budget Allocator</a>
+  <%= link_to "Live Chat", 
+      user_chat_path,
+      class: "sidebar-link" %>
+  
+
 </aside>
 
   <!-- Main Content -->

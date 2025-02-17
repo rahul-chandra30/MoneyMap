@@ -1,0 +1,14 @@
+<div class="chat-container">
+  <h1>Chat with Users</h1>
+
+  <div class="active-chats">
+    <h2>Active Conversations</h2>
+    <% @chat_rooms.each do |room| %>
+      <%= link_to chat_room_path(room), class: "chat-room-link" do %>
+        <div class="chat-room-item">
+          Chat with <%= room.user.name %>
+        </div>
+      <% end %>
+    <% end %>
+  </div>
+</div>

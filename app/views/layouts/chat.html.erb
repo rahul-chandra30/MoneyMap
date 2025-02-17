@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Chat - MoneyMap</title>
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= action_cable_meta_tag %>
+  <%= stylesheet_link_tag 'application', media: 'all' %>
+  <%= javascript_importmap_tags %>
+</head>
+
+<style>
+.chat-layout {
+  background-color: #f5f5f5;
+  min-height: 100vh;
+}
+
+.back-button {
+  padding: 0.5rem 1rem;
+  background-color: #f3f4f6;
+  border-radius: 0.375rem;
+  color: #374151;
+  font-weight: 500;
+  margin-bottom: 1rem;
+  transition: background-color 0.2s;
+}
+
+.back-button:hover {
+  background-color: #e5e7eb;
+}
+
+.chat-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+.experts-list, .active-chats {
+  margin-top: 2rem;
+}
+
+.expert-item, .chat-room-item {
+  padding: 1rem;
+  background: white;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chat-button {
+  background-color: #10B981;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+}
+
+.chat-button:hover {
+  background-color: #059669;
+}
+</style>
+<body class="chat-layout">
+  <div class="p-6 max-w-4xl mx-auto bg-white rounded-2xl shadow-lg">
+    <% if current_user %>
+      <button onclick="window.location.href='<%= dashboard_path %>'" class="back-button">
+        ← Back to Dashboard
+      </button>
+    <% elsif current_expert %>
+      <button onclick="window.location.href='<%= expert_dashboard_path %>'" class="back-button">
+        ← Back to Dashboard
+      </button>
+    <% end %>
+    <%= yield %>
+  </div>
+</body>
+</html>
