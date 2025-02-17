@@ -23,12 +23,7 @@ class ApplicationController < ActionController::Base
   end
 
   # For Experts
-  def authenticate_expert!
-    unless current_expert
-      flash[:alert] = "Please sign in as an Expert to access this page."
-      redirect_to expert_signin_path
-    end
-  end
+
 
   def authenticate_user_or_expert!
     unless current_user || current_expert
