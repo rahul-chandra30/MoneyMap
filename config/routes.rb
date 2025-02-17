@@ -61,4 +61,12 @@ Rails.application.routes.draw do
 
   # Live chat
   mount ActionCable.server => '/cable'
+
+  resources :group_chats, only: [], path: '/group_chats' do
+  resources :group_messages, only: [:create], as: 'messages'
+end
+
+# Add the custom show route separately
+get '/group_chats/:name', to: 'group_chats#show', as: 'group_chat'
+
 end

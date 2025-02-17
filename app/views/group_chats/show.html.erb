@@ -1,0 +1,47 @@
+<div id="group-chat">
+  <h1>Group Chat: <%= @group_chat.name %></h1>
+<div id="messages">
+  <% @messages.each do |message| %>
+    <div class="message">
+      <strong><%= message.sender.name %>:</strong>
+      <span><%= message.content %></span>
+      <small><%= message.created_at.strftime("%H:%M") %></small>
+    </div>
+  <% end %>
+</div>
+    <%= form_with url: group_chat_messages_path(@group_chat.name), method: :post, id: "message-form", remote: true do |form| %>
+         <%= form.text_field :content, id: "message-input", placeholder: "Type your message..." %>
+        <%= form.submit "Send", id: "send-button" %>
+    <% end %>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const messageForm = document.getElementById("message-form");
+    const messageInput = document.getElementById("message-input");
+
+    messageForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const content = messageInput.value.trim();
+      if (content === "") return;
+
+      fetch(`/group_chats/<%= @group_chat.name %>/group_messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": document.querySelector("[name='csrf-token']").content
+        },
+        body: JSON.stringify({
+          group_message: {
+            content: content
+          }
+        })
+      })
+      .then(response => {
+        if (response.ok) messageInput.value = "";
+      })
+      .catch(error => console.error("Error:", error));
+    });
+  });
+</script>

@@ -9,6 +9,8 @@
 #   end
 #   
 
+GroupChat.create(name: "users")
+GroupChat.create(name: "experts")
 
 
 
