@@ -4,19 +4,20 @@ class MessagesController < ApplicationController
   def create
     @chat_room = ChatRoom.find(params[:chat_room_id])
     @message = @chat_room.messages.build(message_params)
-    @message.sender = current_user || current_expert
+
+    # Set the correct sender based on who is logged in
+    @message.sender = if current_user
+                       current_user
+    elsif current_expert
+                       current_expert
+    end
 
     if @message.save
       ChatChannel.broadcast_to(
         @chat_room,
-        {
-          message: render_to_string(
-            partial: "messages/message",
-            locals: { message: @message }
-          )
-        }
+        message: render_message(@message)
       )
-      head :ok
+      render json: { status: "success" }, status: :created
     else
       render json: { errors: @message.errors.full_messages }, status: :unprocessable_entity
     end
@@ -26,5 +27,15 @@ class MessagesController < ApplicationController
 
   def message_params
     params.require(:message).permit(:content)
+  end
+
+  def render_message(message)
+    ApplicationController.renderer.render(
+      partial: "messages/message",
+      locals: {
+        message: message,
+        user: message.sender.is_a?(User) ? message.sender : nil
+      }
+    )
   end
 end

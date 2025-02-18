@@ -8,7 +8,7 @@
   <%= csrf_meta_tags %>
   <%= action_cable_meta_tag %>
   <%= javascript_importmap_tags %>
-  <%= javascript_include_tag 'cable', 'data-turbolinks-track': 'reload' %>
+
 </head>
 
 <style>
@@ -424,158 +424,75 @@
   </div>
 
   <script type="module">
-    // Import consumer correctly at the top
-    const consumer = await import("<%= asset_path 'channels/consumer.js' %>").then(m => m.default);
+  console.log('Expert chat script initialization started');
+  
+  const consumer = await import("<%= asset_path 'channels/consumer.js' %>").then(m => m.default);
+  console.log('ActionCable consumer imported successfully:', consumer);
 
-    // Make showModal available globally
-    window.showModal = async function(userId, userName) {
-      console.log('showModal called with:', userId, userName);
-      const modal = document.getElementById('userModal');
-      modal.querySelector('#modalUserName').textContent = userName;
-      
-      try {
-        const response = await fetch(`/chat_rooms/create_or_find?user_id=${userId}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector("[name='csrf-token']").content,
-            'Accept': 'application/json'
-          }
-        });
-        
-        const data = await response.json();
-        console.log('Response Data:', data);
-        
-        modal.dataset.chatRoomId = data.chat_room_id;
-        const messagesContainer = modal.querySelector('.messages-container');
-        messagesContainer.innerHTML = data.messages;
-        
-        // Scroll to bottom immediately after loading messages
-        setTimeout(() => {
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }, 100);
-        
-        // Setup chat subscription
-        const subscription = setupChatSubscription(data.chat_room_id);
-        
-        // Update form submission
-        const form = modal.querySelector('.message-form');
-        setupMessageForm(subscription, form);
-        
-        modal.style.display = 'flex';
-      } catch (error) {
-        console.error('Error in showModal:', error);
-      }
-    };
+  window.showModal = async function(userId, userName) {
+    console.log(`showModal called for user ID: ${userId}, name: ${userName}`);
+    const modal = document.getElementById('userModal');
+    modal.querySelector('#modalUserName').textContent = userName;
 
-    // Make closeModal available globally
-    window.closeModal = function() {
-      const modal = document.getElementById('userModal');
-      modal.style.display = 'none';
-    };
-
-    // Rest of your functions remain the same but inside the script
-    function setupChatSubscription(chatRoomId) {
-      const modal = document.querySelector('.modal');
-      const messagesContainer = modal.querySelector('.messages-container');
-      
-      const subscription = consumer.subscriptions.create(
-        { 
-          channel: "ChatChannel",
-          room_id: chatRoomId
-        },
-        {
-          connected() {
-            console.log('Connected to ChatChannel:', chatRoomId);
-          },
-          received(data) {
-            console.log('Received message:', data);
-            if (data.error) {
-              console.error('Error:', data.error);
-              return;
-            }
-            messagesContainer.insertAdjacentHTML('beforeend', data.message);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          }
-        }
-      );
-    
-      return subscription;
-    }
-
-    // Add a function to scroll to bottom
-    function scrollToBottom(container) {
-      container.scrollTop = container.scrollHeight;
-    }
-
-    // Add click event listener to all user cards
-    document.addEventListener('DOMContentLoaded', () => {
-      const modal = document.querySelector('.modal');
-      const messagesContainer = modal.querySelector('.messages-container');
-      
-      const handleSubmit = async (e) => {
-        if (e.target.matches('.message-form')) {
-          e.preventDefault();
-          const form = e.target;
-          const input = form.querySelector('.message-input');
-          const content = input.value.trim();
-          
-          if (!content) return;
-          
-          try {
-            const chatRoomId = modal.dataset.chatRoomId;
-            const response = await fetch(`/chat_rooms/${chatRoomId}/messages`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
-              },
-              body: JSON.stringify({ message: { content: content } })
-            });
-            
-            if (response.ok) {
-              input.value = '';
-              input.focus();
-              // Scroll to bottom after sending message
-              scrollToBottom(messagesContainer);
-            }
-          } catch (error) {
-            console.error('Error:', error);
-          }
-        }
-      };
-
-      modal.addEventListener('submit', handleSubmit);
-    });
-
-    // Closing modal when clicked outside
-    window.onclick = function(event) {
-      const modal = document.getElementById('userModal');
-      if (event.target === modal) {
-        closeModal();
-      }
-    }
-
-    function setupMessageForm(subscription, form) {
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const input = form.querySelector('.message-input');
-        const content = input.value.trim();
-        
-        if (!content) return;
-        
-        try {
-          console.log('Sending message:', content);
-          subscription.send({ content: content });
-          input.value = '';
-          input.focus();
-        } catch (error) {
-          console.error('Error sending message:', error);
+    try {
+      console.log(`Fetching chat room data for user ID: ${userId}`);
+      const response = await fetch(`/chat_rooms/create_or_find?user_id=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector("[name='csrf-token']").content,
+          'Accept': 'application/json'
         }
       });
-    }
+      
+      const data = await response.json();
+      console.log('Chat room data received:', data);
 
-    // Update the subscription setup in showModal function
+      modal.dataset.chatRoomId = data.chat_room_id;
+      console.log(`Chat room ID set to: ${data.chat_room_id}`);
+      
+      const messagesContainer = modal.querySelector('.messages-container');
+      console.log('Updating messages container with existing messages');
+      messagesContainer.innerHTML = data.messages;
+      
+      const form = modal.querySelector('.message-form');
+      form.action = `/chat_rooms/${data.chat_room_id}/messages`;
+      console.log(`Form action set to: ${form.action}`);
+      
+      // Setup chat subscription and form
+      console.log(`Setting up chat subscription for room ID: ${data.chat_room_id}`);
+      const subscription = setupChatSubscription(data.chat_room_id);
+      
+      console.log('Setting up message form handlers');
+      setupMessageForm(form, subscription);
+      
+      console.log('Scrolling to bottom of messages container');
+      setTimeout(() => {
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        console.log('Messages container scrolled to bottom');
+      }, 100);
+
+      console.log('Displaying modal');
+      modal.style.display = 'flex';
+    } catch (error) {
+      console.error('Error in showModal:', error);
+      console.error('Error stack:', error.stack);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  window.closeModal = function() {
+    console.log('closeModal called');
+    const modal = document.getElementById('userModal');
+    modal.style.display = 'none';
+    console.log('Modal hidden');
+  };
+
+  function setupChatSubscription(chatRoomId) {
+    console.log(`Setting up chat subscription for room ID: ${chatRoomId}`);
+    const modal = document.getElementById('userModal');
+    const messagesContainer = modal.querySelector('.messages-container');
+    
     const subscription = consumer.subscriptions.create(
       { 
         channel: "ChatChannel",
@@ -583,21 +500,109 @@
       },
       {
         connected() {
-          console.log('Connected to ChatChannel:', chatRoomId);
+          console.log(`Successfully connected to ChatChannel for room ID: ${chatRoomId}`);
+        },
+        disconnected() {
+          console.log(`Disconnected from ChatChannel for room ID: ${chatRoomId}`);
+        },
+        rejected() {
+          console.error(`Subscription to ChatChannel rejected for room ID: ${chatRoomId}`);
         },
         received(data) {
-          console.log('Received message:', data);
+          console.log(`Message received from ChatChannel for room ID: ${chatRoomId}`, data);
           if (data.error) {
-            console.error('Error:', data.error);
+            console.error('Error in received message:', data.error);
             return;
           }
+          console.log('Inserting new message into messages container');
           messagesContainer.insertAdjacentHTML('beforeend', data.message);
+          console.log('Scrolling to bottom after new message');
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       }
     );
 
-    setupMessageForm(subscription, form);
-  </script>
+    console.log('Chat subscription created successfully');
+    return subscription;
+  }
+
+  // Function to scroll to bottom
+  function scrollToBottom(container) {
+    console.log('Scrolling container to bottom');
+    container.scrollTop = container.scrollHeight;
+    console.log('Container scrolled');
+  }
+
+  // Setup message form with unified approach
+  function setupMessageForm(form, subscription) {
+    console.log('Setting up message form');
+    
+    // Remove existing event listeners by cloning and replacing the form
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    // Define the submit handler
+    async function handleSubmit(e) {
+      e.preventDefault();
+      console.log('Form submit event triggered');
+      
+      const input = newForm.querySelector('.message-input');
+      const content = input.value.trim();
+      
+      if (!content) {
+        console.log('Message content empty, ignoring submission');
+        return;
+      }
+      
+      try {
+        const modal = document.getElementById('userModal');
+        const chatRoomId = modal.dataset.chatRoomId;
+        console.log(`Preparing to send message for chat room ID: ${chatRoomId}`);
+        
+        const response = await fetch(newForm.action, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
+          },
+          body: JSON.stringify({ message: { content: content } })
+        });
+        
+        if (response.ok) {
+          console.log('HTTP message sent successfully');
+          input.value = ''; // Clear input after successful send
+          input.focus();    // Keep focus on input
+        } else {
+          console.error('Error sending message via HTTP:', response.status);
+        }
+      } catch (error) {
+        console.error('Exception while sending message:', error);
+        console.error('Error stack:', error.stack);
+      }
+    }
+    
+    newForm.addEventListener('submit', handleSubmit);
+    console.log('Message form setup complete');
+    return newForm;
+  }
+
+  // Initialize when document is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    
+    // Handle modal closing when clicking outside
+    const modal = document.getElementById('userModal');
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        console.log('Click detected outside modal content, closing modal');
+        closeModal();
+      }
+    };
+    
+    console.log('Modal click-outside handler initialized');
+  });
+  
+  console.log('Expert chat script initialization completed');
+</script>
 </body>
 </html>

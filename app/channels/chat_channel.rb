@@ -10,26 +10,26 @@ class ChatChannel < ApplicationCable::Channel
   end
 
   def receive(data)
+  # Create the message
+  chat_room = ChatRoom.find(params[:room_id])
+  message = chat_room.messages.create!(
+    content: data['content'],
+    sender: current_user # or appropriate sender
+  )
   
-    @message = @chat_room.messages.create!(
-      content: data['content'],
-      sender: current_user_or_expert
+  # Broadcast the message
+  ChatRoomChannel.broadcast_to(
+    chat_room,
+    message: render_message(message)
+  )
+  end
+
+private
+
+  def render_message(message)
+    ApplicationController.renderer.render(
+      partial: 'messages/message',
+      locals: { message: message }
     )
-    
-    ChatChannel.broadcast_to(
-      @chat_room,
-      {
-        message: ApplicationController.renderer.render(
-          partial: 'messages/message',
-          locals: { 
-            message: @message,
-            current_user_or_expert: current_user_or_expert 
-          }
-        )
-      }
-    )
-  rescue => e
-  
-    transmit(error: e.message)
   end
 end

@@ -8,7 +8,7 @@
   <%= action_cable_meta_tag %>
   <%= javascript_importmap_tags %>
   <%= csrf_meta_tags %>
-  <%= javascript_include_tag 'cable', 'data-turbolinks-track': 'reload' %>
+
 </head>
 
 <style>
@@ -411,16 +411,21 @@
     </div>
   </div>
 
-  <script type="module">
+<script type="module">
+  console.log('Chat script initialization started');
+  
   // Import consumer correctly at the top
   const consumer = await import("<%= asset_path 'channels/consumer.js' %>").then(m => m.default);
+  console.log('ActionCable consumer imported successfully');
 
   // Make showModal available globally
   window.showModal = async function(expertId, expertName) {
+    console.log(`showModal called for expert ID: ${expertId}, name: ${expertName}`);
     const modal = document.getElementById('expertModal');
     modal.querySelector('#modalExpertName').textContent = expertName;
-    
+
     try {
+      console.log(`Fetching chat room data for expert ID: ${expertId}`);
       const response = await fetch(`/chat_rooms/create_or_find?expert_id=${expertId}`, {
         method: 'POST',
         headers: {
@@ -431,40 +436,51 @@
       });
       
       const data = await response.json();
-      console.log('Response Data:', data);
-      
+      console.log('Chat room data received:', data);
+
       modal.dataset.chatRoomId = data.chat_room_id;
+      console.log(`Chat room ID set to: ${data.chat_room_id}`);
+      
       const messagesContainer = modal.querySelector('.messages-container');
+      console.log('Updating messages container with existing messages');
       messagesContainer.innerHTML = data.messages;
+      
+      console.log('Scrolling to bottom of messages container');
       setTimeout(() => {
         messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        console.log('Messages container scrolled to bottom');
       }, 100);
-      
-      // Update form action URL with chat room ID
+
       const form = modal.querySelector('.message-form');
       form.action = `/chat_rooms/${data.chat_room_id}/messages`;
-      
-      // Setup chat subscription
+      console.log(`Form action set to: ${form.action}`);
+
+      // Set up subscription and form
+      console.log(`Setting up chat subscription for room ID: ${data.chat_room_id}`);
       const subscription = setupChatSubscription(data.chat_room_id);
       
-      // Update form submission
-      setupMessageForm(subscription, form);
-      
+      console.log('Setting up message form handlers');
+      setupMessageForm(form, subscription);
+
+      console.log('Displaying modal');
       modal.style.display = 'flex';
     } catch (error) {
       console.error('Error in showModal:', error);
+      console.error('Error stack:', error.stack);
+      alert(`Error: ${error.message}`);
     }
   };
 
-  // Make closeModal available globally
   window.closeModal = function() {
+    console.log('closeModal called');
     const modal = document.getElementById('expertModal');
     modal.style.display = 'none';
+    console.log('Modal hidden');
   };
 
-  // Rest of your functions remain the same but inside the script
   function setupChatSubscription(chatRoomId) {
-    const modal = document.querySelector('.modal');
+    console.log(`Setting up chat subscription for room ID: ${chatRoomId}`);
+    const modal = document.getElementById('expertModal');
     const messagesContainer = modal.querySelector('.messages-container');
     
     const subscription = consumer.subscriptions.create(
@@ -474,38 +490,58 @@
       },
       {
         connected() {
-          console.log('Connected to ChatChannel:', chatRoomId);
+          console.log(`Successfully connected to ChatChannel for room ID: ${chatRoomId}`);
+        },
+        disconnected() {
+          console.log(`Disconnected from ChatChannel for room ID: ${chatRoomId}`);
+        },
+        rejected() {
+          console.error(`Subscription to ChatChannel rejected for room ID: ${chatRoomId}`);
         },
         received(data) {
-          console.log('Received message:', data);
+          console.log(`Message received from ChatChannel for room ID: ${chatRoomId}`, data);
           if (data.error) {
-            console.error('Error:', data.error);
+            console.error('Error in received message:', data.error);
             return;
           }
+          console.log('Inserting new message into messages container');
           messagesContainer.insertAdjacentHTML('beforeend', data.message);
+          console.log('Scrolling to bottom after new message');
           messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       }
     );
 
+    console.log('Chat subscription created successfully');
     return subscription;
   }
 
-  // Add form submission handler
-  document.addEventListener('DOMContentLoaded', () => {
-    const modal = document.getElementById('expertModal');
-    const form = modal.querySelector('.message-form');
+  function setupMessageForm(form, subscription) {
+    console.log('Setting up message form');
     
-    form.addEventListener('submit', async (e) => {
+    // Remove existing event listeners by cloning and replacing the form
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    // Define the submit handler
+    async function handleSubmit(e) {
       e.preventDefault();
-      const input = form.querySelector('.message-input');
+      console.log('Form submit event triggered');
+      
+      const input = newForm.querySelector('.message-input');
       const content = input.value.trim();
       
-      if (!content) return;
+      if (!content) {
+        console.log('Message content empty, ignoring submission');
+        return;
+      }
       
       try {
+        const modal = document.getElementById('expertModal');
         const chatRoomId = modal.dataset.chatRoomId;
-        const response = await fetch(form.action, {
+        console.log(`Preparing to send message for chat room ID: ${chatRoomId}`);
+        
+        const response = await fetch(newForm.action, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -515,45 +551,39 @@
         });
         
         if (response.ok) {
-          input.value = '';
-          input.focus();
+          console.log('HTTP message sent successfully');
+          input.value = ''; // Clear input after successful send
+          input.focus();    // Keep focus on input
+        } else {
+          console.error('Error sending message via HTTP:', response.status);
         }
       } catch (error) {
-        console.error('Error sending message:', error);
+        console.error('Exception while sending message:', error);
+        console.error('Error stack:', error.stack);
       }
-    });
-  });
-
-  // Add a function to scroll to bottom
-  function scrollToBottom(container) {
-    container.scrollTop = container.scrollHeight;
+    }
+    
+    newForm.addEventListener('submit', handleSubmit);
+    console.log('Message form setup complete');
+    return newForm;
   }
 
+  // Handle modal closing when clicking outside
   window.onclick = function(event) {
     const modal = document.getElementById('expertModal');
     if (event.target === modal) {
+      console.log('Click detected outside modal content, closing modal');
       closeModal();
     }
   }
 
-  function setupMessageForm(subscription, form) {
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const input = form.querySelector('.message-input');
-      const content = input.value.trim();
-      
-      if (!content) return;
-      
-      try {
-        console.log('Sending message#1:', content);
-        subscription.send({ content: content });
-        input.value = '';
-        input.focus();
-      } catch (error) {
-        console.error('Error sending message:', error);
-      }
-    });
-  }
-  </script>
+  // Initialize when document is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    // Any initialization if needed
+  });
+  
+  console.log('Chat script initialization completed');
+</script>
 </body>
 </html>

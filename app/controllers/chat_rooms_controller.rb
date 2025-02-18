@@ -12,7 +12,7 @@ class ChatRoomsController < ApplicationController
   def show
     @chat_room = ChatRoom.find(params[:id])
     @messages = @chat_room.messages.includes(:sender).order(created_at: :asc)
-    
+
     unless @chat_room.user == current_user || @chat_room.expert == current_expert
       flash[:alert] = "You don't have permission to access this chat room."
       redirect_to root_path
@@ -30,7 +30,13 @@ class ChatRoomsController < ApplicationController
       @chat_room = ChatRoom.find_or_create_by!(user: @user, expert: current_expert)
     end
 
-    @messages = @chat_room.messages.includes(:sender).order(created_at: :asc)
+    @messages = @chat_room.messages.last(20)
+    messages_html = render_to_string(
+    partial: "messages/message",
+    collection: @messages,
+    locals: { user: current_user },
+    formats: [:html]
+    )
 
     render json: {
       chat_room_id: @chat_room.id,

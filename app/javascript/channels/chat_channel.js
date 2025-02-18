@@ -44,10 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
                             return
                         }
                         messagesContainer.insertAdjacentHTML('beforeend', data.message)
-                        // Scroll to bottom after receiving message
-                        setTimeout(() => {
-                            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-                        }, 100);
                     }
                 }
             )
