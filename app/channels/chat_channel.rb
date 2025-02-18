@@ -2,7 +2,6 @@ class ChatChannel < ApplicationCable::Channel
   def subscribed
     @chat_room = ChatRoom.find(params[:room_id])
     stream_for @chat_room
-    stream_for current_user_or_expertimport consumer from "./consumer"
   
   end
 

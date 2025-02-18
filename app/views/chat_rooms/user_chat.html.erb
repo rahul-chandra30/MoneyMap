@@ -8,7 +8,7 @@
   <%= action_cable_meta_tag %>
   <%= javascript_importmap_tags %>
   <%= csrf_meta_tags %>
-
+  <%= javascript_include_tag 'cable', 'data-turbolinks-track': 'reload' %>
 </head>
 
 <style>
@@ -390,7 +390,7 @@
       
       <div class="messages-container">
         <% if @messages %>
-          <%= render 'message/messages', message: @message %>
+          <%= render @messages %>
         <% end %>
       </div>
 

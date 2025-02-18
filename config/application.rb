@@ -15,7 +15,6 @@ module Moneymap
     # not contain `.rb` files, or that should not be reloaded or eager loaded.
     # Common ones are `templates`, `generators`, or `middleware`, for example.
     config.autoload_lib(ignore: %w[assets tasks])
-    config.action_cable.mount_path = "/websocket"
 
     # Set time zone to IST
     config.time_zone = "Asia/Kolkata"
