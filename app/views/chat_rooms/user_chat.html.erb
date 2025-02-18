@@ -471,12 +471,7 @@
     }
   };
 
-  window.closeModal = function() {
-    console.log('closeModal called');
-    const modal = document.getElementById('expertModal');
-    modal.style.display = 'none';
-    console.log('Modal hidden');
-  };
+
 
   function setupChatSubscription(chatRoomId) {
     console.log(`Setting up chat subscription for room ID: ${chatRoomId}`);
@@ -569,21 +564,38 @@
     return newForm;
   }
 
-  // Handle modal closing when clicking outside
-  window.onclick = function(event) {
-    const modal = document.getElementById('expertModal');
-    if (event.target === modal) {
-      console.log('Click detected outside modal content, closing modal');
-      closeModal();
-    }
-  }
-
-  // Initialize when document is ready
   document.addEventListener('DOMContentLoaded', () => {
     console.log('DOMContentLoaded event fired');
-    // Any initialization if needed
+    
+    // Handle modal closing when clicking outside
+    const modal = document.getElementById('expertModal');
+    window.addEventListener('click', function(event) {
+      if (event.target === modal) {
+        console.log('Click detected outside modal content, closing modal');
+        closeModal();
+      }
+    });
+    
+    console.log('Modal click-outside handler initialized');
   });
+window.closeModal = function() {
+  console.log('closeModal called');
+  const modal = document.getElementById('expertModal');
+  modal.style.display = 'none';
+  console.log('Modal hidden');
   
+  // Optional: Clean up subscription when modal closes
+  const chatRoomId = modal.dataset.chatRoomId;
+  if (chatRoomId) {
+    const subscription = consumer.subscriptions.subscriptions.find(
+      sub => JSON.parse(sub.identifier).room_id === chatRoomId
+    );
+    if (subscription) {
+      console.log(`Unsubscribing from chat room ${chatRoomId}`);
+      subscription.unsubscribe();
+    }
+  }
+};
   console.log('Chat script initialization completed');
 </script>
 </body>
