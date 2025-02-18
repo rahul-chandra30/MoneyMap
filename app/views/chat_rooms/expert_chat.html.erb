@@ -8,7 +8,7 @@
   <%= csrf_meta_tags %>
   <%= action_cable_meta_tag %>
   <%= javascript_importmap_tags %>
-  <%= javascript_include_tag 'cable', 'data-turbolinks-track': 'reload' %>
+
 </head>
 
 <style>
@@ -402,7 +402,7 @@
       </div>
       <div class="messages-container">
         <% if @messages %>
-          <%= render @messages %>
+          <%= render 'message/messages', message: @message %>
         <% end %>
       </div>
 
@@ -576,26 +576,7 @@
     }
 
     // Update the subscription setup in showModal function
-    const subscription = consumer.subscriptions.create(
-      { 
-        channel: "ChatChannel",
-        room_id: chatRoomId
-      },
-      {
-        connected() {
-          console.log('Connected to ChatChannel:', chatRoomId);
-        },
-        received(data) {
-          console.log('Received message:', data);
-          if (data.error) {
-            console.error('Error:', data.error);
-            return;
-          }
-          messagesContainer.insertAdjacentHTML('beforeend', data.message);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }
-    );
+  
 
     setupMessageForm(subscription, form);
   </script>
