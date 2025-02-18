@@ -552,10 +552,11 @@
         
         if (response.ok) {
           console.log('HTTP message sent successfully');
-          input.value = ''; // Clear input after successful send
+          input.value = ''; // Clear input immediately after successful send
           input.focus();    // Keep focus on input
         } else {
           console.error('Error sending message via HTTP:', response.status);
+          input.value = '';
         }
       } catch (error) {
         console.error('Exception while sending message:', error);
