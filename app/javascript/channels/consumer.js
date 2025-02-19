@@ -1,2 +1,9 @@
 import { createConsumer } from "@rails/actioncable"
-export default createConsumer()
+
+const consumer = createConsumer()
+
+export default consumer
+
+document.addEventListener("turbo:before-cache", () => {
+    consumer.disconnect();
+});

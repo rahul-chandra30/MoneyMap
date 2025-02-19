@@ -1,6 +1,16 @@
 import consumer from "./consumer"
 
+// Add this at the top level
+console.log('Chat channel initialized');
+console.log('ActionCable consumer status:', consumer.connection.monitor.status);
+
 document.addEventListener("DOMContentLoaded", () => {
+    console.log('Checking ActionCable connection:', {
+        connection: consumer.connection,
+        connectionState: consumer.connection.monitor.state,
+        subscriptions: consumer.subscriptions.subscriptions
+    });
+
     const modals = document.querySelectorAll('.modal')
 
     modals.forEach(modal => {
