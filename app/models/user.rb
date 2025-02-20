@@ -1,5 +1,6 @@
 class User < ApplicationRecord
   has_secure_password
+
   has_many :bookings, foreign_key: 'user_id' 
   has_many :expenses
   has_many :expenditures

@@ -5,13 +5,11 @@ class SignupController < ApplicationController
 
   def create
     @user = User.new(user_params)
-    Rails.logger.info "User Params: #{user_params.inspect}"
+
     if @user.save
-      Rails.logger.info "User saved successfully"
-      redirect_to signin_path, notice: 'User was successfully created. Please sign in.'
+      redirect_to signin_path, notice: "Account created successfully! Please sign in."
     else
-      Rails.logger.error "User save failed: #{@user.errors.full_messages.join(", ")}"
-      render :index
+      render :index, status: :unprocessable_entity
     end
   end
 

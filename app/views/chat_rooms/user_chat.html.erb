@@ -475,7 +475,7 @@
 
   function setupChatSubscription(chatRoomId) {
     console.log(`Setting up chat subscription for room ID: ${chatRoomId}`);
-    const modal = document.getElementById('expertModal');
+    const modal = document.getElementById(window.location.pathname.includes('expert_chat') ? 'userModal' : 'expertModal');
     const messagesContainer = modal.querySelector('.messages-container');
     
     const subscription = consumer.subscriptions.create(
@@ -485,40 +485,32 @@
       },
       {
         connected() {
-          console.log(`Successfully connected to ChatChannel for room ID: ${chatRoomId}`);
+          console.log(`Connected to ChatChannel for room ID: ${chatRoomId}`);
         },
+        
         disconnected() {
-          console.log(`Disconnected from ChatChannel for room ID: ${chatRoomId}`);
+          console.log('Disconnected from ChatChannel');
         },
-        rejected() {
-          console.error(`Subscription to ChatChannel rejected for room ID: ${chatRoomId}`);
-        },
+        
         received(data) {
-          console.log(`Message received from ChatChannel for room ID: ${chatRoomId}`, data);
-          if (data.error) {
-            console.error('Error in received message:', data.error);
-            return;
+          console.log('Received:', data);
+          if (data.type === 'new_message') {
+            messagesContainer.insertAdjacentHTML('beforeend', data.message);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
           }
-          console.log('Inserting new message into messages container');
-          messagesContainer.insertAdjacentHTML('beforeend', data.message);
-          console.log('Scrolling to bottom after new message');
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
         }
       }
     );
 
-    console.log('Chat subscription created successfully');
     return subscription;
   }
 
   function setupMessageForm(form, subscription) {
     console.log('Setting up message form');
     
-    // Remove existing event listeners by cloning and replacing the form
     const newForm = form.cloneNode(true);
     form.parentNode.replaceChild(newForm, form);
     
-    // Define the submit handler
     async function handleSubmit(e) {
       e.preventDefault();
       console.log('Form submit event triggered');
@@ -532,35 +524,18 @@
       }
       
       try {
-        const modal = document.getElementById('expertModal');
-        const chatRoomId = modal.dataset.chatRoomId;
-        console.log(`Preparing to send message for chat room ID: ${chatRoomId}`);
-        
-        const response = await fetch(newForm.action, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
-          },
-          body: JSON.stringify({ message: { content: content } })
-        });
-        
-        if (response.ok) {
-          console.log('HTTP message sent successfully');
-          input.value = ''; // Clear input immediately after successful send
-          input.focus();    // Keep focus on input
-        } else {
-          console.error('Error sending message via HTTP:', response.status);
-          input.value = '';
-        }
+        // Send through ActionCable instead of AJAX
+        subscription.perform('receive', { content: content });
+        console.log('Message sent via ActionCable');
+        input.value = '';
+        input.focus();
       } catch (error) {
-        console.error('Exception while sending message:', error);
+        console.error('Error sending message:', error);
         console.error('Error stack:', error.stack);
       }
     }
     
     newForm.addEventListener('submit', handleSubmit);
-    console.log('Message form setup complete');
     return newForm;
   }
 
@@ -597,6 +572,23 @@ window.closeModal = function() {
   }
 };
   console.log('Chat script initialization completed');
+
+
+  function checkActionCableStatus() {
+    console.log('ActionCable Status Check:', {
+        connected: consumer.connection.isActive(),
+        state: consumer.connection.monitor.state,
+        subscriptions: consumer.subscriptions.subscriptions.map(sub => {
+            return {
+                identifier: sub.identifier,
+                state: sub.state
+            }
+        })
+    });
+  }
+
+  // Make it available globally
+  window.checkActionCableStatus = checkActionCableStatus;
 </script>
 </body>
 </html>
