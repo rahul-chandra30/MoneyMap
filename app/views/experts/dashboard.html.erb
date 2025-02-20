@@ -220,7 +220,7 @@
       class: "#{current_page?(expert_dashboard_path) ? 'active' : ''}", 
       onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>  
   <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Bookings</a>
-  <a href="#" onclick="setTimeout(function() { window.location.reload(); }, 100)">Live Chat</a>
+<%= link_to "Live Chat 💬", expert_chat_path, class: "#{current_page?(expert_chat_path) ? 'active' : ''}" %>
 </aside>
 
   <!-- Main Content -->

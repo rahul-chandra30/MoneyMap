@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat with Users - MoneyMap</title>
+  <%= stylesheet_link_tag "application", media: "all" %>
+  <%= csrf_meta_tags %>
+  <%= action_cable_meta_tag %>
+  <%= javascript_importmap_tags %>
+
+</head>
+
+<style>
+
+    body {
+      background-color: #f3f4f6;
+      display: flex;
+      min-height: 100vh;
+    }
+    
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: white;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 10px 20px;
+      width: 100%;
+      position: fixed;
+      top: 0;
+      left: 0;
+    }
+    
+    .logo-container {
+      display: flex;
+      align-items: center;
+    }
+    .logo-container img {
+      height: 50px;
+    }
+    
+    .profile-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .profile-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-color: #ccc;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    
+    .logout {
+      font-size: 1rem;
+      color:rgb(255, 73, 73);
+      text-decoration: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .logout:hover {
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .sidebar {
+      background-color: white;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+      position: fixed;
+      top: 70px;
+      left: 0;
+      height: calc(100vh - 70px);
+      display: flex;
+      flex-direction: column;
+      width: 260px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 15px;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: #374151;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+    .sidebar a.active, .sidebar a:hover {
+      background-color:rgb(126, 220, 151);
+      color: white;
+    }
+
+    .content {
+      margin-left: 270px;
+      padding: 20px;
+      width: 100%;
+      margin-top: 60px;
+    }
+
+    .card-container {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      flex: 1;
+      text-align: center;
+    }
+
+    .expense-list {
+      margin-top: 20px;
+    }
+
+    .expense-item {
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+      margin-bottom: 10px;
+    }
+
+      .filters {
+      margin-bottom: 1.5rem;
+      margin-top: 1rem;
+    }
+    
+    select {
+      padding: 0.5rem;
+      border-radius: 0.375rem;
+      border: 1px solid #d1d5db;
+      margin-right: 1rem;
+    }
+    
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    
+    .amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+        .detail-card {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      max-width: 500px;
+    }
+    .detail-card label {
+      font-weight: bold;
+      display: block;
+      margin-top: 10px;
+    }
+    .detail-card input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+    .detail-card button {
+      background-color: #059669;
+      color: white;
+      padding: 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+    .detail-card button:hover {
+      background-color: #047857;
+    }
+
+      .save-btn {
+      background-color: #10B981;
+      color: white;
+      padding: 0.4rem 1rem;
+      border-radius: 0.5rem;
+      transition: all 0.3s ease;
+    }
+
+      .save-btn:hover {
+      background-color: #059669;
+    }
+    
+    .positive { color: #059669; }
+    .negative { color: #DC2626; }
+
+    .user-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+    
+    .user-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+    }
+    
+    .user-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .user-info {
+      margin-bottom: 15px;
+    }
+    
+    .user-name {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #374151;
+    }
+    
+    .chat-button {
+      background-color: rgb(126, 220, 151);
+      color: white;
+      padding: 10px 20px;
+      border-radius: 5px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background-color 0.2s;
+    }
+    
+    .chat-button:hover {
+      background-color: rgb(96, 190, 121);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background-color: white;
+      padding: 2rem;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 600px;
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .close-button {
+      font-size: 1.5rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .messages-container {
+      height: 300px;
+      overflow-y: auto;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .message {
+      margin-bottom: 1rem;
+      max-width: 80%;
+    }
+
+    .message.sent {
+      margin-left: auto;
+      background: #007bff;
+      color: white;
+      border-radius: 15px 15px 0 15px;
+      padding: 0.8rem;
+    }
+
+    .message.received {
+      margin-right: auto;
+      background: #e9ecef;
+      border-radius: 15px 15px 15px 0;
+      padding: 0.8rem;
+    }
+
+    .message-form {
+      padding: 1rem;
+      border-top: 1px solid #dee2e6;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .message-input {
+      flex: 1;
+      padding: 0.5rem;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+    }
+
+    .send-button {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .send-button:hover {
+      background: #218838;
+    }
+
+    .chat-error {
+      background-color: #ffebee;
+      color: #c62828;
+      padding: 8px;
+      margin: 8px 0;
+      border-radius: 4px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+</style>
+
+<body>
+  <!-- Header -->
+  <header>
+    <div class="logo-container">
+      <%= image_tag "expert_icon.png", alt: "Expert Icon" %>
+    </div>
+    <div class="profile-container">
+      <button class="profile-container">
+        <%= link_to "👤", profile_path, method: :delete, class: "profile-icon" %>
+      </button>
+      <nav>
+        <button><%= link_to "Log Out", signin_path, method: :delete, class: "logout" %></button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <%= link_to "Dashboard", expert_dashboard_path, 
+        class: "#{current_page?(expert_dashboard_path) ? 'active' : ''}" %>
+    <%= link_to "Bookings", "#", class: "" %>
+    <%= link_to "Live Chat 💬", expert_chat_path, 
+        class: "#{current_page?(expert_chat_path) ? 'active' : ''}" %>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="content">
+    <h1>Chat with Users</h1>
+    
+    <div class="user-list">
+      <% @users.each do |user| %>
+        <div class="user-card" onclick="showModal('<%= user.id %>', '<%= user.name %>')">
+          <div class="user-info">
+            <div class="user-name"><%= user.name %></div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </main>
+
+  <div id="userModal" class="modal" style="display: none;" data-chat-room-id="<%= @chat_room&.id %>">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="modalUserName" class="text-2xl font-bold"></h2>
+        <button onclick="closeModal()" class="close-button">&times;</button>
+      </div>
+      <div class="messages-container">
+        <% if @messages %>
+          <%= render @messages %>
+        <% end %>
+      </div>
+
+      <div class="message-form-container">
+        <%= form_with(
+          url: '#', 
+          class: "message-form", 
+          local: false
+        ) do |f| %>
+          <div class="input-group">
+            <%= f.text_field :content,
+                class: "message-input", 
+                placeholder: "Type your message..." %>
+            <%= f.submit "Send", class: "send-button", data: { disable_with: false } %>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+  console.log('Expert chat script initialization started');
+  
+  const consumer = await import("<%= asset_path 'channels/consumer.js' %>").then(m => m.default);
+  console.log('ActionCable consumer imported successfully:', consumer);
+
+  window.showModal = async function(userId, userName) {
+    try {
+      const modal = document.getElementById('userModal');
+      if (!modal) {
+        throw new Error('Modal element not found');
+      }
+
+      const nameElement = modal.querySelector('#modalUserName');
+      if (!nameElement) {
+        throw new Error('Modal name element not found');
+      }
+
+      console.log(`showModal called for user ID: ${userId}, name: ${userName}`);
+      nameElement.textContent = userName;
+
+      // Fetch chat room data
+      const response = await fetch(`/chat_rooms/create_or_find?user_id=${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': document.querySelector("[name='csrf-token']").content,
+          'Accept': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Chat room data received:', data);
+
+      const messagesContainer = modal.querySelector('.messages-container');
+      if (!messagesContainer) {
+        throw new Error('Messages container not found');
+      }
+
+      // Update modal with chat room data
+      modal.dataset.chatRoomId = data.chat_room_id;
+      messagesContainer.innerHTML = data.messages;
+
+      // Setup chat subscription
+      const subscription = setupChatSubscription(data.chat_room_id);
+      
+      // Setup message form
+      const form = modal.querySelector('.message-form');
+      if (form) {
+        setupMessageForm(form, subscription);
+      }
+
+      // Show modal and scroll to bottom
+      modal.style.display = 'flex';
+      messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+    } catch (error) {
+      console.error('Error in showModal:', error);
+      console.error('Error stack:', error.stack);
+      alert(`Error: ${error.message}`);
+    }
+  };
+
+  window.closeModal = function() {
+    console.log('closeModal called');
+    const modal = document.getElementById('userModal');
+    modal.style.display = 'none';
+    console.log('Modal hidden');
+  };
+
+  function setupChatSubscription(chatRoomId) {
+    if (!chatRoomId) {
+      console.error('No chat room ID provided');
+      return null;
+    }
+
+    const modal = document.getElementById('userModal');
+    if (!modal) {
+      console.error('Modal element not found');
+      return null;
+    }
+
+    const messagesContainer = modal.querySelector('.messages-container');
+    if (!messagesContainer) {
+      console.error('Messages container not found');
+      return null;
+    }
+
+    console.log(`Setting up chat subscription for room ID: ${chatRoomId}`);
+    
+    return consumer.subscriptions.create(
+      { 
+        channel: "ChatChannel",
+        room_id: chatRoomId
+      },
+      {
+        connected() {
+          console.log(`Connected to ChatChannel for room ID: ${chatRoomId}`);
+        },
+        
+        disconnected() {
+          console.log('Disconnected from ChatChannel');
+        },
+        
+        received(data) {
+          console.log('Received:', data);
+          if (data.type === 'new_message' && messagesContainer) {
+            messagesContainer.insertAdjacentHTML('beforeend', data.message);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          }
+        }
+      }
+    );
+  }
+
+  // Function to scroll to bottom
+  function scrollToBottom(container) {
+    console.log('Scrolling container to bottom');
+    container.scrollTop = container.scrollHeight;
+    console.log('Container scrolled');
+  }
+
+  // Setup message form with unified approach
+  function setupMessageForm(form, subscription) {
+    if (!form || !subscription) {
+      console.error('Form or subscription not provided');
+      return null;
+    }
+
+    console.log('Setting up message form');
+    
+    const newForm = form.cloneNode(true);
+    form.parentNode.replaceChild(newForm, form);
+    
+    async function handleSubmit(e) {
+      e.preventDefault();
+      
+      const input = newForm.querySelector('.message-input');
+      if (!input) {
+        console.error('Message input not found');
+        return;
+      }
+
+      const content = input.value.trim();
+      if (!content) {
+        return;
+      }
+      
+      try {
+        subscription.perform('receive', { content: content });
+        input.value = '';
+        input.focus();
+      } catch (error) {
+        console.error('Error sending message:', error);
+        console.error('Error stack:', error.stack);
+      }
+    }
+    
+    newForm.addEventListener('submit', handleSubmit);
+    return newForm;
+  }
+
+  // Initialize when document is ready
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOMContentLoaded event fired');
+    
+    // Handle modal closing when clicking outside
+    const modal = document.getElementById('userModal');
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        console.log('Click detected outside modal content, closing modal');
+        closeModal();
+      }
+    };
+    
+    console.log('Modal click-outside handler initialized');
+  });
+  
+  console.log('Expert chat script initialization completed');
+
+    function checkActionCableStatus() {
+    console.log('ActionCable Status Check:', {
+        connected: consumer.connection.isActive(),
+        state: consumer.connection.monitor.state,
+        subscriptions: consumer.subscriptions.subscriptions.map(sub => {
+            return {
+                identifier: sub.identifier,
+                state: sub.state
+            }
+        })
+    });
+  }
+
+  // Make it available globally
+  window.checkActionCableStatus = checkActionCableStatus;
+</script>
+</body>
+</html>

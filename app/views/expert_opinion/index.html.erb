@@ -8,6 +8,7 @@
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   
+  
 <style>
     body {
       background-color: #f3f4f6;
@@ -532,6 +533,35 @@ function handlePaymentSuccess(response, bookingId) {
       const modal = document.getElementById('expertModal');
       if (event.target === modal) {
         closeModal();
+      }
+    }
+
+    // Add this to your JavaScript where the income saving fetch request is made
+    async function saveIncome(year, month, income) {
+      try {
+        const response = await fetch('/expenditures', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
+          },
+          body: JSON.stringify({
+            year: year,
+            month: month,
+            income: income
+          })
+        });
+
+        const data = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to save income');
+        }
+
+        return data;
+      } catch (error) {
+        console.error('Error saving income:', error);
+        throw error;
       }
     }
   </script>
