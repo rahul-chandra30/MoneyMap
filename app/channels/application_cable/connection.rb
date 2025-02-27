@@ -11,6 +11,11 @@ module ApplicationCable
       Rails.logger.debug "Client disconnected: #{current_user_or_expert.class} #{current_user_or_expert.id}"
     end
 
+    
+    def current_user
+      current_user_or_expert if current_user_or_expert.is_a?(User)
+    end
+
     private
 
     def find_verified_user

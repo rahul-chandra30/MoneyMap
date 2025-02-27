@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_02_19_070503) do
+ActiveRecord::Schema[8.0].define(version: 2025_02_25_142221) do
   create_table "bookings", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "user_name", null: false
@@ -104,6 +104,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_19_070503) do
     t.index ["sender_type", "sender_id"], name: "index_messages_on_sender"
   end
 
+  create_table "notifications", force: :cascade do |t|
+    t.integer "user_id", null: false
+    t.string "title", null: false
+    t.text "message", null: false
+    t.boolean "read", default: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.string "name"
     t.string "email"
@@ -113,12 +123,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_02_19_070503) do
     t.datetime "updated_at", null: false
   end
 
-  add_foreign_key "bookings", "experts"
-  add_foreign_key "bookings", "users"
   add_foreign_key "chat_rooms", "experts"
   add_foreign_key "chat_rooms", "users"
   add_foreign_key "expenditures", "users"
   add_foreign_key "expenses", "users"
   add_foreign_key "group_messages", "group_chats"
   add_foreign_key "messages", "chat_rooms"
+  add_foreign_key "notifications", "users"
 end

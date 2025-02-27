@@ -4,14 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MoneyMap</title>
-
+  <%= csrf_meta_tags %>
+  <%= csp_meta_tag %>
+  <%= action_cable_meta_tag %>
+  <%= javascript_importmap_tags %>
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
   <style>
     body {
       background-color: #f3f4f6;
       display: flex;
       min-height: 100vh;
     }
-    
     header {
       display: flex;
       justify-content: space-between;
@@ -24,7 +28,6 @@
       top: 0;
       left: 0;
     }
-    
     .logo-container {
       display: flex;
       align-items: center;
@@ -32,12 +35,11 @@
     .logo-container img {
       height: 50px;
     }
-    
     .profile-container {
       display: flex;
       align-items: center;
+      position: relative;
     }
-    
     .profile-icon {
       width: 40px;
       height: 40px;
@@ -49,19 +51,98 @@
       margin-right: 10px;
       cursor: pointer;
     }
-    
     .logout {
       font-size: 1rem;
-      color:rgb(255, 73, 73);
+      color: rgb(255, 73, 73);
       text-decoration: none;
       font-weight: bold;
       cursor: pointer;
     }
     .logout:hover {
       text-decoration: none;
-      cursor: pointer;
     }
-
+    .notification-container {
+      position: relative;
+      margin: 0 20px;
+    }
+    .notification-btn {
+      background: none;
+      border: none;
+      font-size: 20px;
+      padding: 8px;
+      cursor: pointer;
+      position: relative;
+    }
+    .notification-count {
+      position: absolute;
+      top: -5px;
+      right: -5px;
+      background: #ff4757;
+      color: white;
+      border-radius: 50%;
+      padding: 2px 6px;
+      font-size: 12px;
+      min-width: 20px;
+      text-align: center;
+      display: none;
+    }
+    .notification-dropdown {
+      position: absolute;
+      top: 100%;
+      right: -100px;
+      width: 300px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      display: none;
+      z-index: 1000;
+      margin-top: 10px;
+    }
+    .notification-header {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    .notification-header h3 {
+      margin: 0;
+      font-size: 16px;
+      color: #333;
+    }
+    .notification-list {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0;
+      margin: 0;
+      list-style: none;
+    }
+    .notification-item {
+      padding: 15px;
+      border-bottom: 1px solid #eee;
+      transition: background-color 0.2s;
+    }
+    .notification-item:hover {
+      background-color: #f8f9fa;
+    }
+    .notification-item strong {
+      display: block;
+      color: #333;
+      margin-bottom: 5px;
+    }
+    .notification-item p {
+      margin: 0;
+      color: #666;
+      font-size: 14px;
+    }
+    .notification-item small {
+      display: block;
+      color: #999;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    .notification-empty {
+      text-align: center;
+      color: #666;
+      padding: 15px;
+    }
     .sidebar {
       background-color: white;
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -74,7 +155,6 @@
       flex-direction: column;
       width: 260px;
     }
-
     .sidebar a {
       display: block;
       padding: 15px;
@@ -85,23 +165,20 @@
       border-radius: 5px;
     }
     .sidebar a.active, .sidebar a:hover {
-      background-color:rgb(126, 220, 151);
+      background-color: rgb(126, 220, 151);
       color: white;
     }
-
     .content {
       margin-left: 270px;
       padding: 20px;
       width: 100%;
       margin-top: 60px;
     }
-
     .card-container {
       display: flex;
       gap: 20px;
       margin-top: 20px;
     }
-
     .card {
       background: white;
       padding: 20px;
@@ -110,11 +187,19 @@
       flex: 1;
       text-align: center;
     }
-
+    .card h2 {
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    .amount {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+    .positive { color: #059669; }
+    .negative { color: #DC2626; }
     .expense-list {
       margin-top: 20px;
     }
-
     .expense-item {
       background: white;
       padding: 10px;
@@ -122,34 +207,117 @@
       box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
       margin-bottom: 10px;
     }
-
-      .filters {
+    .filters {
       margin-bottom: 1.5rem;
       margin-top: 1rem;
     }
-    
     select {
       padding: 0.5rem;
       border-radius: 0.375rem;
       border: 1px solid #d1d5db;
       margin-right: 1rem;
     }
-    
-    .card h2 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0,0,0,0.5);
+      z-index: 1000;
+      justify-content: center;
+      align-items: center;
     }
-    
-    .amount {
+    .modal.show {
+      display: flex;
+    }
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      width: 50%;
+      max-height: 70%;
+      overflow-y: auto;
+      border-radius: 5px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .close-button {
+      background: none;
+      border: none;
       font-size: 1.5rem;
-      font-weight: bold;
+      cursor: pointer;
+      padding: 0.5rem;
     }
-    
-    .positive { color: #059669; }
-    .negative { color: #DC2626; }
+    .chatbot-messages, .messages-container {
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 10px;
+    }
+    .message { 
+      margin: 5px 0; 
+      padding: 8px; 
+      border-radius: 5px; 
+    }
+    .sent { 
+      background-color: #dcf8c6; 
+      text-align: right; 
+    }
+    .received { 
+      background-color: #e9ecef; 
+      text-align: left; 
+    }
+    .modal-content small { 
+      font-size: 0.8em; 
+      color: #666; 
+    }
+    .message-form-container { 
+      margin-top: 10px; 
+    }
+    .input-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+    .chatbot-input, .message-input {
+      width: 80%;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      flex-grow: 1;
+    }
+    .send-button {
+      background-color: rgb(126, 220, 151);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .send-button:hover {
+      background-color: rgb(96, 190, 121);
+    }
+    .chatbot-btn {
+      background-color: rgb(61, 61, 61);
+      color: white;
+      margin-right: 25px;
+      padding: 5px 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .chatbot-btn:hover {
+      background-color: rgb(170, 170, 170);
+      color: rgb(61, 61, 61);
+      transition: 0.3s;
+    }
   </style>
-
-
 </head>
 <body>
   <!-- Header -->
@@ -157,10 +325,25 @@
     <div class="logo-container">
       <%= image_tag "money_map.png", alt: "MoneyMap Logo" %>
     </div>
+    
     <div class="profile-container">
-     <button class="profile-container">
-      <%= link_to "👤", profile_path, method: :delete, class: "profile-icon" %>
-     </button>
+      <button id="chatbot-btn" class="chatbot-btn">Budget Bot 🤖</button>
+      <div class="notification-container">
+        <button id="notification-btn" class="notification-btn">
+          🔔 <span id="notification-count" class="notification-count">0</span>
+        </button>
+        <div id="notification-dropdown" class="notification-dropdown">
+          <div class="notification-header">
+            <h3>Notifications</h3>
+          </div>
+          <ul id="notification-list" class="notification-list">
+            <li class="notification-empty">No notifications</li>
+          </ul>
+        </div>
+      </div>
+      <button class="profile-container">
+        <%= link_to "👤", profile_path, method: :delete, class: "profile-icon" %>
+      </button>
       <nav>
         <button><%= link_to "Log Out", signin_path, method: :delete, class: "logout" %></button>
       </nav>
@@ -168,23 +351,23 @@
   </header>
 
   <!-- Sidebar -->
-<aside class="sidebar">
-  <%= link_to "Dashboard", 
-      dashboard_path, 
-      class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
-      onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
-  
-  <%= link_to "Enter / Edit Spends", 
-      expenses_path, 
-      class: "#{current_page?(expenses_path) ? 'active' : ''}", 
-      onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
-  
-  <%= link_to "Expert Opinion", 
-      expert_opinion_path,
-      class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
+  <aside class="sidebar">
+    <%= link_to "Dashboard", 
+        dashboard_path, 
+        class: "#{current_page?(dashboard_path) ? 'active' : ''}", 
+        onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
+    
+    <%= link_to "Enter / Edit Spends", 
+        expenses_path, 
+        class: "#{current_page?(expenses_path) ? 'active' : ''}", 
+        onclick: "setTimeout(function() { window.location.reload(); }, 100)" %>
+    
+    <%= link_to "Expert Opinion", 
+        expert_opinion_path,
+        class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
 
-<%= link_to "Live Chat 💬", user_chat_path, class: "#{current_page?(user_chat_path) ? 'active' : ''}" %>
-</aside>
+    <%= link_to "Live Chat 💬", user_chat_path, class: "#{current_page?(user_chat_path) ? 'active' : ''}" %>
+  </aside>
 
   <!-- Main Content -->
   <main class="content">
@@ -225,6 +408,26 @@
     </div>
   </main>
 
+  <!-- Chatbot Modal -->
+  <div id="chatbot-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Budget Bot 🤖</h2>
+        <button class="close-button" onclick="closeModal()">×</button>
+      </div>
+      
+      <div class="messages-container" id="chatbot-messages"></div>
+
+      <div class="message-form-container">
+        <div class="input-group">
+          <input type="text" id="chatbot-input" class="message-input" placeholder="Ask me about your budget...">
+          <button id="chatbot-send" class="send-button">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Data Script -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       fetchDashboardData();
@@ -246,38 +449,200 @@
         updateDashboard(data);
       })
       .catch(error => console.error('Error:', error));
-
-       console.log("Dashboard data updated.");
     }
 
     function updateDashboard(data) {
-    // Format numbers with commas for Indian format
-    document.getElementById('total-income').textContent = 
-      `₹${parseInt(data.total_income).toLocaleString('en-IN')}`;
-    document.getElementById('total-expenses').textContent = 
-      `₹${parseInt(data.total_expenses).toLocaleString('en-IN')}`;
+      document.getElementById('total-income').textContent = 
+        `₹${parseInt(data.total_income).toLocaleString('en-IN')}`;
+      document.getElementById('total-expenses').textContent = 
+        `₹${parseInt(data.total_expenses).toLocaleString('en-IN')}`;
 
-    // Update savings with proper formatting
-    const savingsElement = document.getElementById('total-savings');
-    const displaySavings = Math.max(data.total_income - data.total_expenses, 0);
-    savingsElement.textContent = `₹${parseInt(displaySavings).toLocaleString('en-IN')}`;
+      const savingsElement = document.getElementById('total-savings');
+      const displaySavings = Math.max(data.total_income - data.total_expenses, 0);
+      savingsElement.textContent = `₹${parseInt(displaySavings).toLocaleString('en-IN')}`;
+      savingsElement.className = `amount ${data.savings_status}`;
 
-    // Update savings color based on status
-    savingsElement.className = `amount ${data.savings_status}`;
-
-    // Update expense breakdown
-    const container = document.getElementById('expense-container');
-    container.innerHTML = '';
-    data.expenses.forEach(expense => {
-      const div = document.createElement('div');
-      div.className = 'expense-item';
-      div.innerHTML = 
-        `<strong>${expense.category}  →  </strong>
-         <span>₹${parseInt(expense.amount_spent).toLocaleString('en-IN')}</span>`;
-      container.appendChild(div);
-    });
+      const container = document.getElementById('expense-container');
+      container.innerHTML = '';
+      data.expenses.forEach(expense => {
+        const div = document.createElement('div');
+        div.className = 'expense-item';
+        div.innerHTML = 
+          `<strong>${expense.category} → </strong>
+           <span>₹${parseInt(expense.amount_spent).toLocaleString('en-IN')}</span>`;
+        container.appendChild(div);
+      });
     }
   </script>
-  
+
+  <!-- Chatbot and Notifications Script -->
+  <!-- Chatbot and Notifications Script -->
+  <script type="module">
+    import consumer from "channels/consumer";
+
+    console.log("Consumer imported:", consumer);
+
+    // Track new notifications since last dropdown open
+    let newNotificationCount = 0;
+
+    // Notifications Channel with Debugging
+    const notificationsChannel = consumer.subscriptions.create("NotificationsChannel", {
+      initialized() {
+        console.log("NotificationsChannel initialized");
+      },
+      connected() {
+        console.log("Connected to NotificationsChannel");
+      },
+      disconnected() {
+        console.log("Disconnected from NotificationsChannel");
+      },
+      received(data) {
+        console.log("Notification received:", data);
+        const list = document.getElementById('notification-list');
+        if (!list) {
+          console.error("Notification list element not found!");
+          return;
+        }
+        console.log("Current notification list:", list.innerHTML);
+        // Clear "No notifications" if present
+        if (list.firstChild && list.firstChild.className === 'notification-empty') {
+          console.log("Clearing 'No notifications'");
+          list.innerHTML = '';
+        }
+        // Add new notification
+        const item = document.createElement('li');
+        item.className = 'notification-item';
+        item.innerHTML = `
+          <strong>${data.title}</strong>
+          <p>${data.message}</p>
+          <small>${data.time || 'Just now'}</small>
+        `;
+        console.log("Adding new notification:", item.innerHTML);
+        list.insertBefore(item, list.firstChild);
+        // Update new notification count
+        newNotificationCount++;
+        const count = document.getElementById('notification-count');
+        if (count) {
+          count.textContent = newNotificationCount;
+          count.style.display = newNotificationCount > 0 ? 'block' : 'none';
+          console.log("Updated new notification count to:", newNotificationCount);
+        } else {
+          console.error("Notification count element not found!");
+        }
+      }
+    });
+
+    // Chatbot Channel
+    const chatbotChannel = consumer.subscriptions.create("ChatbotChannel", {
+      initialized() {
+        console.log("ChatbotChannel initialized");
+      },
+      connected() {
+        console.log("Connected to ChatbotChannel");
+      },
+      disconnected() {
+        console.log("Disconnected from ChatbotChannel");
+      },
+      received(data) {
+        console.log("Chatbot received:", data);
+        const messagesContainer = document.getElementById('chatbot-messages');
+        if (messagesContainer) {
+          const botMessage = `
+            <div class="message received">
+              <p>${data.content}</p>
+              <small>${data.sender}</small>
+            </div>`;
+          messagesContainer.insertAdjacentHTML('beforeend', botMessage);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+      }
+    });
+
+    window.chatbotChannel = chatbotChannel;
+
+    // Modal and Notification Controls
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log("DOM fully loaded");
+      const modal = document.getElementById('chatbot-modal');
+      const btn = document.getElementById('chatbot-btn');
+      const closeBtn = modal && modal.querySelector('.close-button');
+      const sendBtn = document.getElementById('chatbot-send');
+      const input = document.getElementById('chatbot-input');
+      const messagesContainer = document.getElementById('chatbot-messages');
+      const notificationBtn = document.getElementById('notification-btn');
+      const dropdown = document.getElementById('notification-dropdown');
+
+      if (!modal || !btn || !closeBtn || !sendBtn || !input || !messagesContainer || !notificationBtn || !dropdown) {
+        console.warn('Some elements not found:', { modal, btn, closeBtn, sendBtn, input, messagesContainer, notificationBtn, dropdown });
+        return;
+      }
+
+      console.log('All elements found');
+
+      // Chatbot Modal
+      btn.addEventListener('click', function() {
+        console.log('Opening chatbot modal');
+        modal.style.display = 'flex';
+      });
+
+      window.closeModal = function() {
+        console.log('Closing chatbot modal');
+        modal.style.display = 'none';
+      };
+      closeBtn.addEventListener('click', window.closeModal);
+
+      window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+          window.closeModal();
+        }
+      });
+
+      sendBtn.addEventListener('click', function() {
+        const message = input.value.trim();
+        if (message) {
+          console.log("Sending message:", message);
+          const userMessage = `
+            <div class="message sent">
+              <p>${message}</p>
+              <small>You</small>
+            </div>`;
+          messagesContainer.insertAdjacentHTML('beforeend', userMessage);
+          messagesContainer.scrollTop = messagesContainer.scrollHeight;
+          chatbotChannel.send({ message: message });
+          input.value = '';
+        }
+      });
+
+      input.addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+          sendBtn.click();
+        }
+      });
+
+      // Notification Dropdown
+      notificationBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        console.log('Toggling notification dropdown');
+        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        // Reset count when opening dropdown
+        if (dropdown.style.display === 'block') {
+          newNotificationCount = 0;
+          const count = document.getElementById('notification-count');
+          if (count) {
+            count.textContent = newNotificationCount;
+            count.style.display = 'none';
+            console.log("Reset notification count to 0");
+          }
+        }
+      });
+
+      document.addEventListener('click', function(e) {
+        if (!dropdown.contains(e.target) && e.target !== notificationBtn) {
+          console.log('Closing dropdown - clicked outside');
+          dropdown.style.display = 'none';
+        }
+      });
+    });
+  </script>
 </body>
 </html>

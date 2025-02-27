@@ -67,5 +67,14 @@ Rails.application.routes.draw do
     resources :messages, only: [ :create ]
   end
 
+  resources :notifications, only: [:index] do
+    collection do
+      post :mark_all_as_read
+    end
+    member do
+      post :mark_as_read
+    end
+  end
+
   mount ActionCable.server => "/cable"
 end

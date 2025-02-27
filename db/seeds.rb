@@ -1,49 +1,44 @@
-# This file should ensure the existence of records required to run the application in every environment (production,
-# development, test). The code here should be idempotent so that it can be executed at any point in every environment.
-# The data can then be loaded with the bin/rails db:seed command (or created alongside the database with db:setup).
-#
-# Example:
-#
-#   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
-#     MovieGenre.find_or_create_by!(name: genre_name)
-#   end
-#
 
-# Create test users
-puts "Creating test users..."
-user = User.create!(
-  name: "Test User",
-  email: "user@example.com",
-  password: "password123",
+user = User.find_by(email: "rahul@example.com") || User.create!(
+  name: "Rahul",
+  email: "rahul@example.com",
+  password: "password123", 
   phone: "1234567890"
 )
+puts "Using or created user: #{user.name} (ID: #{user.id})"
 
-expert = Expert.create!(
-  name: "Test Expert",
-  email: "expert@example.com",
-  password: "password123",
-  phone: "0987654321",
-  designation: "Financial Advisor",
-  charges_per_session: 1000.00
-)
 
-puts "Creating test chat room..."
-chat_room = ChatRoom.create!(
-  user: user,
-  expert: expert
-)
+months = (1..12).to_a  
+categories = ["Food", "Rent", "Transport", "Entertainment", "Shopping", "Bills"]
 
-puts "Creating test messages..."
-Message.create!(
-  chat_room: chat_room,
-  sender: user,
-  content: "Hello, I need financial advice"
-)
 
-Message.create!(
-  chat_room: chat_room,
-  sender: expert,
-  content: "Hi! I'll be happy to help"
-)
+months.each do |month|
 
-puts "Seed data created successfully!"
+  income_amount = rand(8000..15000)
+  Expenditure.create!(
+    user_id: user.id,  
+    year: 2025,        
+    month: month,     
+    income: income_amount 
+  )
+  puts "Added ₹#{income_amount} income for #{month}/2025"
+
+
+  num_expenses = rand(1..3)
+  num_expenses.times do
+
+    category = categories.sample  
+    amount = rand(1000..14699)       
+
+    Expense.create!(
+      user_id: user.id,
+      year: 2025,
+      month: month.to_s,  
+      category: category,
+      amount_spent: amount
+    )
+    puts "Added ₹#{amount} #{category} expense for #{month}/2025"
+  end
+end
+
+puts "All done! Added income and expenses for all months of 2025."

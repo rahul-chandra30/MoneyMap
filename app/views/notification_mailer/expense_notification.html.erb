@@ -1,0 +1,26 @@
+<!-- app/views/notification_mailer/expense_notification.html.erb -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <style>
+      body { font-family: Arial, sans-serif; color: #333; }
+      .container { max-width: 600px; margin: 20px auto; padding: 20px; background: #f9f9f9; border-radius: 5px; }
+      h1 { font-size: 24px; color: #059669; }
+      p { font-size: 16px; line-height: 1.5; }
+      .footer { font-size: 12px; color: #999; margin-top: 20px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1><%= @title %></h1>
+      <p>Hello <%= @user.name %>,</p>
+      <p>Your budget has been updated:</p>
+      <p><strong><%= @message %></strong></p>
+      <p>View details on your MoneyMap dashboard!</p>
+      <div class="footer">
+        <p>Sent from MoneyMap • <a href="http://localhost:3000">Visit Dashboard</a></p>
+      </div>
+    </div>
+  </body>
+</html>
