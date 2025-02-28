@@ -1,20 +1,19 @@
 # app/channels/chatbot_channel.rb
+require 'open3'
+
 class ChatbotChannel < ApplicationCable::Channel
   def subscribed
-    # Make sure we have a user (not an expert)
     user = connection.current_user
     unless user
       Rails.logger.info "No user found, can’t chat!"
       reject
       return
     end
-    # Start the chat room for this user
     Rails.logger.info "User #{user.id} joined the chatbot!"
     stream_from "chatbot_channel_#{user.id}"
   end
 
   def unsubscribed
-    # Say goodbye when they leave
     user = connection.current_user
     return unless user
     Rails.logger.info "User #{user.id} left the chatbot!"
@@ -22,7 +21,6 @@ class ChatbotChannel < ApplicationCable::Channel
   end
 
   def receive(data)
-    # Get the user and question
     user = connection.current_user
     unless user
       Rails.logger.info "No user, can’t answer!"
@@ -31,14 +29,25 @@ class ChatbotChannel < ApplicationCable::Channel
     question = data["message"]
     Rails.logger.info "User #{user.id} asked: #{question}"
 
-    # Call Python script and get only the returned answer
     python_path = "/Users/rahul/MoneyMap/moneymap/chatbot_env/bin/python3"
-    script_path = "/Users/rahul/MoneyMap/moneymap/chatbot/groq_connector.py"
-    result = `#{python_path} #{script_path} "#{question}" #{user.id}`.strip
-    answer = result.lines.last.strip  # Get only the last line (the return value)
+    script_path = "/Users/rahul/MoneyMap/moneymap/chatbot/chatbot_logic.py"
+    begin
+      cmd = "#{python_path} #{script_path} \"#{question.gsub('"', '\"')}\" #{user.id}"
+      stdout, stderr, status = Open3.capture3(cmd)
+      if status.success?
+        Rails.logger.info "Python stdout: #{stdout}"
+        Rails.logger.error "Python stderr: #{stderr}" unless stderr.empty?
+        answer = stdout.strip
+      else
+        Rails.logger.error "Python script failed: #{stderr}"
+        answer = "Error: Chatbot failed - check logs"
+      end
+    rescue Errno::ENOENT => e
+      Rails.logger.error "Python script error: #{e.message}"
+      answer = "Error: Chatbot script not found"
+    end
     message = { content: answer, sender: 'Budget Bot 🤖' }
 
-    # Send the clean answer to the chat
     ActionCable.server.broadcast("chatbot_channel_#{user.id}", message)
     Rails.logger.info "Sent answer to user #{user.id}: #{message[:content]}"
   end

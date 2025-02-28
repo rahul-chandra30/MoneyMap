@@ -1,99 +1,116 @@
 # groq_connector.py
-
 import requests
 import sqlite3
-from datetime import datetime
+import logging
+import time
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class GroqConnector:
     def __init__(self):
-        self.api_key = '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'  # Replace with your real key!
+        self.api_key = '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'
         self.api_url = 'https://api.groq.com/openai/v1/chat/completions'
 
     def query_agent(self, question, user_id):
-        question_lower = question.lower()
-        print(f"QUESTION: {question}")  # Debug input
+        logger.debug(f"Processing question: {question} for user_id: {user_id}")
 
-        # Define intents with exact keywords
-        budget_keywords = ["expense", "expenses", "spending", "budget", "spent", "income"]
-        tip_keywords = ["tip", "tips", "saving", "savings"]
-        needs_budget = any(kw in question_lower for kw in budget_keywords)
-        wants_tip = any(kw in question_lower for kw in tip_keywords) and not needs_budget
-
-        # Budget intent—fetch data
-        if needs_budget:
-            print("INTENT: Budget")  # Debug
-            conn = sqlite3.connect('/Users/rahul/MoneyMap/moneymap/storage/development.sqlite3')
-            cursor = conn.cursor()
-
-            # Parse year and month
-            year = None
-            month = None
-            for y in range(2025, 2031):
-                if str(y) in question_lower:
-                    year = y
-                    break
-            year = year or 2025
-
-            month_names = {m.lower(): str(i+1) for i, m in enumerate(['january', 'february', 'march', 'april', 'may', 'june', 
-                                                                      'july', 'august', 'september', 'october', 'november', 'december'])}
-            for m_name, m_num in month_names.items():
-                if m_name in question_lower:
-                    month = m_num
-                    break
-            if not month:
-                if "last month" in question_lower:
-                    current = datetime(2025, 2, 25)
-                    last_month = current.month - 1 if current.month > 1 else 12
-                    year = current.year if current.month > 1 else current.year - 1
-                    month = str(last_month)
-                else:
-                    month = '2'
-
-            # Fetch expenses
-            cursor.execute("SELECT category, amount_spent FROM expenses WHERE user_id = ? AND year = ? AND month = ?", 
-                           (user_id, year, month))
-            expenses = cursor.fetchall()
-            conn.close()
-
-            expense_text = "\n".join([f"{cat}: ₹{amt}" for cat, amt in expenses]) or "No expenses found."
-            prompt = f"Answer this budget question in plain English: '{question}'. Data for {month_names.get(month, month)} {year}: {expense_text}. No greetings or extra chat."
-            print(f"PROMPT: {prompt}")  # Debug
-        # Tip intent—savings tips
-        elif wants_tip:
-            print("INTENT: Tips")  # Debug
-            prompt = f"List 2-3 savings tips in plain English for: '{question}'. No budget data or greetings."
-            print(f"PROMPT: {prompt}")  # Debug
-        # Casual intent—chat naturally
-        else:
-            print("INTENT: Casual")  # Debug
-            prompt = f"Reply naturally to: '{question}'. No budget data, tips, or offers to help—just a direct response."
-            print(f"PROMPT: {prompt}")  # Debug
-
-        # Call Groq API with single user prompt
-        response = requests.post(
-            self.api_url,
-            headers={
-                'Authorization': f'Bearer {self.api_key}',
-                'Content-Type': 'application/json'
-            },
-            json={
-                'model': 'mixtral-8x7b-32768',
-                'messages': [{'role': 'user', 'content': prompt}],
-                'max_tokens': 100
-            }
-        )
-        print(f"RESPONSE: {response.status_code} {response.text}")  # Debug
+        # Fetch fresh SQLite data
+        conn = sqlite3.connect('/Users/rahul/MoneyMap/moneymap/storage/development.sqlite3', check_same_thread=False)
+        cursor = conn.cursor()
         
-        # Return answer
-        if response.status_code == 200:
-            data = response.json()
+        # Fetch expenses
+        cursor.execute("SELECT category, amount_spent, year, month FROM expenses WHERE user_id = ?", (user_id,))
+        expenses = cursor.fetchall()
+        expense_text = "\n".join([f"{cat}: ₹{amt} (Year: {yr}, Month: {m})" for cat, amt, yr, m in expenses]) or "No expenses recorded."
+        logger.debug(f"Expense text: {expense_text}")
+        
+        # Fetch expenditures (income) - using 'income' column
+        try:
+            cursor.execute("SELECT income, year, month FROM expenditures WHERE user_id = ?", (user_id,))
+            incomes = cursor.fetchall()
+            income_text = "\n".join([f"Income: ₹{amt} (Year: {yr}, Month: {m})" for amt, yr, m in incomes]) or "No income recorded."
+        except sqlite3.Error as e:
+            logger.error(f"Expenditures query failed: {e}")
+            income_text = "No income data available—check expenditures table."
+        logger.debug(f"Income text: {income_text}")
+        
+        # Fetch users and experts count
+        cursor.execute("SELECT COUNT(*) FROM users")
+        user_count = cursor.fetchone()[0]
+        cursor.execute("SELECT COUNT(*) FROM experts")
+        expert_count = cursor.fetchone()[0]
+        logger.debug(f"Users: {user_count}, Experts: {expert_count}")
+        
+        conn.close()
+
+        main_prompt = f"""You are a budget assistant for Rahul (User ID {user_id}). Use this fresh SQLite data:
+        - Expenses: {expense_text}
+        - Income: {income_text}
+        - Users in system: {user_count}
+        - Experts in system: {expert_count}
+
+        Respond naturally to budget-related sub prompts—keep it concise, personalized, and based on the latest data. Wrap your answer in ### marks internally (e.g., ###Answer###)—no ### in the final output:
+        - Greetings (e.g., 'hi', 'hello'): "Hello! How can I help you with your budget today?"
+        - Expense queries (e.g., 'expenses', 'spending', or typos like 'epenses'): List matching data as "Category: ₹Amount\nCategory: ₹Amount..."—say "No data found" if none matches; default to Feb 2025 if unspecified.
+        - Income queries (e.g., 'income', 'earnings'): List matching income as "Income: ₹Amount"—say "No income recorded" if none.
+        - Savings tips (e.g., 'savings', 'tips'): Give 3 tips based on latest patterns (e.g., max spend {max([amt for _, amt, _, _ in expenses]) if expenses else 0}, avg ~₹{int(sum([amt for _, amt, _, _ in expenses]) / len(expenses)) if expenses else 0}).
+        - Other budget Qs (e.g., 'total spend'): Analyze data concisely.
+        - Non-budget Qs: "Ask me about your budget!"
+
+        Focus on Rahul’s latest spending/income—no extra chatter unless asked.
+        """
+
+        logger.debug(f"Main prompt: {main_prompt}")
+        logger.debug(f"Sub prompt: {question}")
+
+        retries = 3
+        for attempt in range(retries):
             try:
-                return data['choices'][0]['message']['content']
-            except KeyError:
-                return "Error: Bad response format"
-        return f"Error: Groq failed - {response.status_code}"
+                response = requests.post(
+                    self.api_url,
+                    headers={
+                        'Authorization': f'Bearer {self.api_key}',
+                        'Content-Type': 'application/json'
+                    },
+                    json={
+                        'model': 'mixtral-8x7b-32768',
+                        'messages': [
+                            {'role': 'system', 'content': main_prompt},
+                            {'role': 'user', 'content': question}
+                        ],
+                        'max_tokens': 300,
+                        'temperature': 0.7
+                    },
+                    timeout=10
+                )
+                logger.debug(f"API response status: {response.status_code}")
+                logger.debug(f"API response: {response.text}")
+
+                if response.status_code == 200:
+                    data = response.json()
+                    content = data['choices'][0]['message']['content']
+                    start = content.find('###') + 3
+                    end = content.rfind('###')
+                    if start > 2 and end > start:
+                        return content[start:end].strip()
+                    return content.strip()
+                elif response.status_code == 429:
+                    logger.warning(f"Rate limit hit (429) - Retry {attempt + 1}/{retries}")
+                    if attempt < retries - 1:
+                        time.sleep(5)  # Wait 5 seconds before retry
+                        continue
+                    return "I’m getting too many requests—try again in a minute!"
+                else:
+                    logger.error(f"API failed with status: {response.status_code}")
+                    return f"API error: {response.status_code}"
+            except requests.RequestException as e:
+                logger.error(f"API request failed: {str(e)}")
+                return f"API request failed: {str(e)}"
+        return "Rate limit exceeded—please wait and retry!"
 
 if __name__ == "__main__":
     connector = GroqConnector()
-    answer = connector.query_agent("Hi bot", 4)
+    answer = connector.query_agent("Expenses in February 2025", 1)
     print("Answer:", answer)
