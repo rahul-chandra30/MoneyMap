@@ -1,55 +1,67 @@
 class DashboardController < ApplicationController
-  before_action :authenticate_user!, only: [:index]
-  before_action :authenticate_expert!, only: [:expert]
+  before_action :authenticate_user!, only: [ :index ]
 
   def index
     @year = params[:year] || Time.current.year
     @month = params[:month] || Time.current.strftime("%B")
-  end
-
-
-  def expert
-    # Expert dashboard logic
+    @monthly_data = fetch_monthly_data(@year)
+    @expense_breakdown = fetch_expense_breakdown(@year, @month)
   end
 
   def data
     year = params[:year]
     month = params[:month]
-    month_number = Date::MONTHNAMES.index(month)
 
-    # Geting income from expenditures table
-    expenditure = current_user.expenditures.find_by(year: year.to_i, month: month_number)
-
-    # Geting expenses from expenses table
-    expenses = current_user.expenses.where(year: year.to_i, month: month_number)
-
-    total_income = expenditure&.income.to_i
-    total_expenses = expenses.sum(:amount_spent)
-    savings = total_income - total_expenses
-
-    response = {
-        total_income: total_income,
-        total_expenses: total_expenses,
-        savings: savings >= 0 ? savings : 0,
-        savings_status: get_savings_status(savings),
-        expenses: expenses.map { |e| {
-            category: e.category,
-            amount_spent: e.amount_spent
-        }}
+    data = {
+      total_income: current_user.expenditures
+        .where(year: year, month: Date::MONTHNAMES.index(month))
+        .sum(:income),
+      total_expenses: current_user.expenses
+        .where(year: year, month: month)
+        .sum(:amount_spent),
+      expenses: current_user.expenses
+        .where(year: year, month: month)
+        .select(:category, :amount_spent),
+      monthly_data: fetch_monthly_data(year),
+      expense_breakdown: fetch_expense_breakdown(year, month)
     }
 
-    render json: response
+    data[:savings] = data[:total_income] - data[:total_expenses]
+    data[:savings_status] = data[:savings] >= 0 ? "positive" : "negative"
+
+    render json: data
   end
 
   private
 
-  def get_savings_status(savings)
-    if savings > 0
-      'positive'
-    elsif savings == 0
-      'zero'
-    else
-      'negative'
+  def fetch_monthly_data(year)
+    incomes = current_user.expenditures
+      .where(year: year)
+      .group(:month)
+      .sum(:income)
+
+    expenses = current_user.expenses
+      .where(year: year)
+      .group(:month)
+      .sum(:amount_spent)
+
+    (1..12).map do |month|
+      income = incomes[month] || 0
+      expense = expenses[month.to_s] || 0
+      {
+        name: Date::MONTHNAMES[month],
+        data: {
+          "Income" => income,
+          "Savings" => [ income - expense, 0 ].max
+        }
+      }
     end
+  end
+
+  def fetch_expense_breakdown(year, month)
+    current_user.expenses
+      .where(year: year, month: month)
+      .group(:category)
+      .sum(:amount_spent)
   end
 end

@@ -4,13 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard - MoneyMap</title>
-  <%= csrf_meta_tags %>
+<%= csrf_meta_tags %>
   <%= csp_meta_tag %>
   <%= action_cable_meta_tag %>
   <%= javascript_importmap_tags %>
   <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+
   <style>
+    :root {
+      --primary: #7EDC97;
+      --success: #059669;
+      --bg-main: #F3F4F6;
+    }
     body {
       background-color: #f3f4f6;
       display: flex;
@@ -317,7 +323,22 @@
       color: rgb(61, 61, 61);
       transition: 0.3s;
     }
+
+    #trends-chart canvas {
+      background: linear-gradient(to bottom, rgba(126, 220, 151, 0.1), rgba(255, 255, 255, 0));
+    }
+    #expense-chart canvas {
+      background: var(--bg-main);
+    }
+    .chart-toggles span.text-primary {
+      color: var(--primary);
+    }
+    .chart-toggles span.text-success {
+      color: var(--success);
+    }
+
   </style>
+
 </head>
 <body>
   <!-- Header -->
@@ -372,21 +393,28 @@
   <!-- Main Content -->
   <main class="content">
     <h1>Welcome, <%= current_user.name %></h1>
-    
     <div class="filters">
       <select id="year" onchange="fetchDashboardData()">
         <% (2025..2030).each do |year| %>
           <option value="<%= year %>" <%= 'selected' if year == @year %>><%= year %></option>
         <% end %>
       </select>
-      
       <select id="month" onchange="fetchDashboardData()">
         <% Date::MONTHNAMES.compact.each_with_index do |month, index| %>
           <option value="<%= month %>" <%= 'selected' if month == @month %>><%= month %></option>
         <% end %>
       </select>
+      <div class="chart-toggles mt-2">
+        <label class="inline-flex items-center">
+          <input type="checkbox" id="toggle-income" checked class="mr-2">
+          <span class="text-primary">Income</span>
+        </label>
+        <label class="inline-flex items-center ml-4">
+          <input type="checkbox" id="toggle-savings" checked class="mr-2">
+          <span class="text-success">Savings</span>
+        </label>
+      </div>
     </div>
-
     <div class="card-container">
       <div class="card">
         <h2>Total Income</h2>
@@ -401,10 +429,15 @@
         <p id="total-savings" class="amount">₹0</p>
       </div>
     </div>
-
     <div class="expense-list">
       <h2 class="mb-4 font-bold">Expense Breakdown</h2>
       <div id="expense-container"></div>
+    </div>
+    <div class="charts-container shadow-lg rounded-lg bg-gray-50 p-4 mt-6">
+      <h2 class="mb-4 font-bold text-primary">Income & Savings Trends</h2>
+      <%= line_chart @monthly_data, id: "trends-chart" %>
+      <h2 class="mt-6 mb-4 font-bold text-primary">Expense Breakdown</h2>
+      <%= pie_chart @expense_breakdown, id: "expense-chart" %>
     </div>
   </main>
 
@@ -426,223 +459,5 @@
       </div>
     </div>
   </div>
-
-  <!-- Dashboard Data Script -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      fetchDashboardData();
-    });
-
-    function fetchDashboardData() {
-      console.log("Fetching dashboard data...");
-      const year = document.getElementById('year').value;
-      const month = document.getElementById('month').value;
-      
-      fetch(`/dashboard/data?year=${year}&month=${month}`, {
-        headers: {
-          'Accept': 'application/json',
-          'X-CSRF-Token': document.querySelector('[name="csrf-token"]').content
-        }
-      })
-      .then(response => response.json())
-      .then(data => {
-        updateDashboard(data);
-      })
-      .catch(error => console.error('Error:', error));
-    }
-
-    function updateDashboard(data) {
-      document.getElementById('total-income').textContent = 
-        `₹${parseInt(data.total_income).toLocaleString('en-IN')}`;
-      document.getElementById('total-expenses').textContent = 
-        `₹${parseInt(data.total_expenses).toLocaleString('en-IN')}`;
-
-      const savingsElement = document.getElementById('total-savings');
-      const displaySavings = Math.max(data.total_income - data.total_expenses, 0);
-      savingsElement.textContent = `₹${parseInt(displaySavings).toLocaleString('en-IN')}`;
-      savingsElement.className = `amount ${data.savings_status}`;
-
-      const container = document.getElementById('expense-container');
-      container.innerHTML = '';
-      data.expenses.forEach(expense => {
-        const div = document.createElement('div');
-        div.className = 'expense-item';
-        div.innerHTML = 
-          `<strong>${expense.category} → </strong>
-           <span>₹${parseInt(expense.amount_spent).toLocaleString('en-IN')}</span>`;
-        container.appendChild(div);
-      });
-    }
-  </script>
-
-  <!-- Chatbot and Notifications Script -->
-  <!-- Chatbot and Notifications Script -->
-  <script type="module">
-    import consumer from "channels/consumer";
-
-    console.log("Consumer imported:", consumer);
-
-    // Track new notifications since last dropdown open
-    let newNotificationCount = 0;
-
-    // Notifications Channel with Debugging
-    const notificationsChannel = consumer.subscriptions.create("NotificationsChannel", {
-      initialized() {
-        console.log("NotificationsChannel initialized");
-      },
-      connected() {
-        console.log("Connected to NotificationsChannel");
-      },
-      disconnected() {
-        console.log("Disconnected from NotificationsChannel");
-      },
-      received(data) {
-        console.log("Notification received:", data);
-        const list = document.getElementById('notification-list');
-        if (!list) {
-          console.error("Notification list element not found!");
-          return;
-        }
-        console.log("Current notification list:", list.innerHTML);
-        // Clear "No notifications" if present
-        if (list.firstChild && list.firstChild.className === 'notification-empty') {
-          console.log("Clearing 'No notifications'");
-          list.innerHTML = '';
-        }
-        // Add new notification
-        const item = document.createElement('li');
-        item.className = 'notification-item';
-        item.innerHTML = `
-          <strong>${data.title}</strong>
-          <p>${data.message}</p>
-          <small>${data.time || 'Just now'}</small>
-        `;
-        console.log("Adding new notification:", item.innerHTML);
-        list.insertBefore(item, list.firstChild);
-        // Update new notification count
-        newNotificationCount++;
-        const count = document.getElementById('notification-count');
-        if (count) {
-          count.textContent = newNotificationCount;
-          count.style.display = newNotificationCount > 0 ? 'block' : 'none';
-          console.log("Updated new notification count to:", newNotificationCount);
-        } else {
-          console.error("Notification count element not found!");
-        }
-      }
-    });
-
-    // Chatbot Channel
-    const chatbotChannel = consumer.subscriptions.create("ChatbotChannel", {
-      initialized() {
-        console.log("ChatbotChannel initialized");
-      },
-      connected() {
-        console.log("Connected to ChatbotChannel");
-      },
-      disconnected() {
-        console.log("Disconnected from ChatbotChannel");
-      },
-      received(data) {
-        console.log("Chatbot received:", data);
-        const messagesContainer = document.getElementById('chatbot-messages');
-        if (messagesContainer) {
-          const botMessage = `
-            <div class="message received">
-              <p>${data.content}</p>
-              <small>${data.sender}</small>
-            </div>`;
-          messagesContainer.insertAdjacentHTML('beforeend', botMessage);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        }
-      }
-    });
-
-    window.chatbotChannel = chatbotChannel;
-
-    // Modal and Notification Controls
-    document.addEventListener('DOMContentLoaded', function() {
-      console.log("DOM fully loaded");
-      const modal = document.getElementById('chatbot-modal');
-      const btn = document.getElementById('chatbot-btn');
-      const closeBtn = modal && modal.querySelector('.close-button');
-      const sendBtn = document.getElementById('chatbot-send');
-      const input = document.getElementById('chatbot-input');
-      const messagesContainer = document.getElementById('chatbot-messages');
-      const notificationBtn = document.getElementById('notification-btn');
-      const dropdown = document.getElementById('notification-dropdown');
-
-      if (!modal || !btn || !closeBtn || !sendBtn || !input || !messagesContainer || !notificationBtn || !dropdown) {
-        console.warn('Some elements not found:', { modal, btn, closeBtn, sendBtn, input, messagesContainer, notificationBtn, dropdown });
-        return;
-      }
-
-      console.log('All elements found');
-
-      // Chatbot Modal
-      btn.addEventListener('click', function() {
-        console.log('Opening chatbot modal');
-        modal.style.display = 'flex';
-      });
-
-      window.closeModal = function() {
-        console.log('Closing chatbot modal');
-        modal.style.display = 'none';
-      };
-      closeBtn.addEventListener('click', window.closeModal);
-
-      window.addEventListener('click', function(event) {
-        if (event.target === modal) {
-          window.closeModal();
-        }
-      });
-
-      sendBtn.addEventListener('click', function() {
-        const message = input.value.trim();
-        if (message) {
-          console.log("Sending message:", message);
-          const userMessage = `
-            <div class="message sent">
-              <p>${message}</p>
-              <small>You</small>
-            </div>`;
-          messagesContainer.insertAdjacentHTML('beforeend', userMessage);
-          messagesContainer.scrollTop = messagesContainer.scrollHeight;
-          chatbotChannel.send({ message: message });
-          input.value = '';
-        }
-      });
-
-      input.addEventListener('keypress', function(event) {
-        if (event.key === 'Enter') {
-          sendBtn.click();
-        }
-      });
-
-      // Notification Dropdown
-      notificationBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        console.log('Toggling notification dropdown');
-        dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
-        // Reset count when opening dropdown
-        if (dropdown.style.display === 'block') {
-          newNotificationCount = 0;
-          const count = document.getElementById('notification-count');
-          if (count) {
-            count.textContent = newNotificationCount;
-            count.style.display = 'none';
-            console.log("Reset notification count to 0");
-          }
-        }
-      });
-
-      document.addEventListener('click', function(e) {
-        if (!dropdown.contains(e.target) && e.target !== notificationBtn) {
-          console.log('Closing dropdown - clicked outside');
-          dropdown.style.display = 'none';
-        }
-      });
-    });
-  </script>
 </body>
 </html>

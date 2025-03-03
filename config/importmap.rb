@@ -11,3 +11,9 @@ pin_all_from "app/javascript/channels", under: "channels"
 pin_all_from "app/javascript/custom", under: "custom"
 pin "@rails/actioncable", to: "https://ga.jspm.io/npm:@rails/actioncable@7.1.3/app/assets/javascripts/actioncable.esm.js"
 pin "../channels/consumer", to: "channels/consumer.js"
+pin "chartkick", to: "chartkick.js"
+pin "Chart.bundle", to: "Chart.bundle.js"
+pin "chartjs", to: "https://ga.jspm.io/npm:chart.js@4.4.1/dist/chart.js"
+pin "dashboard", to: "dashboard.js", preload: true
+pin "notifications", preload: true
+pin "chatbot", preload: true
