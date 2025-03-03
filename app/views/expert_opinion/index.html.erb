@@ -4,10 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expert Opinion - MoneyMap</title>
-  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  
   
 <style>
     body {
@@ -306,7 +305,8 @@
       border-color: #059669;
       ring: 2px solid #059669;
     }
-  </style>
+</style>
+
 </head>
 <body>
   <!-- Header -->
@@ -338,16 +338,26 @@
         expert_opinion_path,
         class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
     
-    <a href="#">Dynamic Budget Allocator</a>
+        <%= link_to "Live Chat 💬", user_chat_path, class: "#{current_page?(user_chat_path) ? 'active' : ''}" %>
   </aside>
 
   <!-- Main Content -->
-  <main class="content">
+<main class="content">
     <h1 class="text-2xl font-bold mb-6">Expert Opinion</h1>
-  
+    
+    <!-- Search Bar -->
+    <input id="expert-search" type="text" placeholder="Search by name, experience, charges, designation, or date..." class="w-full p-2 border rounded mt-4 mb-6">
+    <div id="no-results" class="hidden text-center text-gray-500">No experts found matching your search.</div>
+
     <div class="expert-cards-container">
       <% @experts.each do |expert| %>
-        <div class="expert-card" onclick="showModal('<%= expert.name %>', '<%= expert.designation %>', '<%= expert.age %>', '<%= expert.experience %>', '<%= expert.about %>', '<%= expert.charges_per_session %>', '<%= expert.id %>')">
+        <div class="expert-card" 
+             data-name="<%= expert.name.downcase %>" 
+             data-experience="<%= expert.experience || 0 %>" 
+             data-charges="<%= expert.charges_per_session || 0 %>" 
+             data-designation="<%= expert.designation ? expert.designation.downcase : '' %>" 
+             data-updated-at="<%= expert.updated_at.strftime('%b %d, %Y').downcase %>"
+             onclick="showModal('<%= expert.name %>', '<%= expert.designation %>', '<%= expert.age %>', '<%= expert.experience %>', '<%= expert.about %>', '<%= expert.charges_per_session %>', '<%= expert.id %>')">
           <div class="expert-header">
             <h2 class="expert-name"><%= expert.name %></h2>
             <p class="expert-designation"><%= expert.designation || "Designation not specified" %></p>
@@ -413,114 +423,51 @@
       modal.querySelector('#modalAbout').textContent = about || "No description available";
       modal.querySelector('.session-charges').textContent = charges ? `Session Charges: ₹${charges}` : "Session Charges: Not specified";
       
-    
       const today = new Date().toISOString().split('T')[0];
       document.getElementById('booking-date').min = today;
       
-    
       const bookButton = modal.querySelector('.book-session-btn');
       bookButton.onclick = async function() {
-    const selectedDate = document.getElementById('booking-date').value;
-    const selectedTime = document.getElementById('booking-time').value;
-    
-    if (!selectedDate || !selectedTime) {
-      alert('Please select both date and time slot');
-      return false;
-    }
-    
-    try {
-      
-      const response = await fetch('/bookings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
-        },
-        body: JSON.stringify({
-          expert_id: expertId,
-          session_date: selectedDate,
-          time_slot: selectedTime
-        })
-      });
+        const selectedDate = document.getElementById('booking-date').value;
+        const selectedTime = document.getElementById('booking-time').value;
+        
+        if (!selectedDate || !selectedTime) {
+          alert('Please select both date and time slot');
+          return false;
+        }
+        
+        try {
+          const response = await fetch('/bookings', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
+            },
+            body: JSON.stringify({
+              expert_id: expertId,
+              session_date: selectedDate,
+              time_slot: selectedTime
+            })
+          });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create booking');
-      }
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create booking');
+          }
 
-      const orderData = await response.json();
+          alert('Booking request sent successfully!');
+          closeModal();
+          window.location.reload();
 
-      // Configuring Razorpay options
-      const options = {
-        key: '<%= Rails.application.credentials.dig(:razorpay, :key_id) %>',
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'MoneyMap Expert Session',
-        description: `Session with ${name}`,
-        order_id: orderData.id,
-        handler: function(response) {
-          handlePaymentSuccess(response, orderData.booking_id);
-        },
-        prefill: {
-          name: '<%= current_user.name %>',
-          email: '<%= current_user.email %>',
-          contact: '<%= current_user.phone %>'
-        },
-        theme: {
-          color: '#059669'
+        } catch (error) {
+          console.error('Error:', error);
+          alert(error.message || 'Something went wrong. Please try again.');
         }
       };
-
-      // Initialize and open Razorpay
-      const rzp = new Razorpay(options);
-      rzp.open();
-      
-      // Close modal after payment initiation
-      closeModal();
-
-    } catch (error) {
-      console.error('Error:', error);
-      alert(error.message || 'Something went wrong. Please try again.');
-    }
-  };
       
       modal.classList.add('show');
       modal.classList.remove('hidden');
     }
-
-function handlePaymentSuccess(response, bookingId) {
-  fetch('/bookings/payment_callback', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
-    },
-    body: JSON.stringify({
-      razorpay_payment_id: response.razorpay_payment_id,
-      razorpay_order_id: response.razorpay_order_id,
-      razorpay_signature: response.razorpay_signature,
-      booking_id: bookingId
-    })
-  })
-  .then(response => {
-    if (!response.ok) {
-      return response.json().then(err => { throw new Error(err.error) });
-    }
-    return response.json();
-  })
-  .then(data => {
-    if (data.success) {
-      alert('Booking confirmed! Check your email for details.');
-      window.location.reload();
-    } else {
-      throw new Error('Payment verification failed');
-    }
-  })
-  .catch(error => {
-    console.error('Error:', error);
-    alert(error.message || 'Payment verification failed. Please contact support.');
-  });
-}
 
     function closeModal() {
       const modal = document.getElementById('expertModal');
@@ -564,6 +511,69 @@ function handlePaymentSuccess(response, bookingId) {
         throw error;
       }
     }
+
+
+  // Updated Search Bar Script
+  document.getElementById('expert-search').addEventListener('input', function() {
+  const query = this.value.toLowerCase().trim();
+  const cards = document.querySelectorAll('.expert-card');
+  let hasMatches = false;
+
+  const match = query.match(/^(age|experience|charges)\s*(>|>=|<|<=|=)?\s*(\d+)$/);
+  
+  cards.forEach(card => {
+    const name = card.dataset.name || '';
+    const designation = card.dataset.designation || '';
+    const updatedAt = card.dataset.updatedAt || '';
+    // Ensure numeric parsing - no extra || 0 needed if data attributes are set
+    const age = Number(card.dataset.age);  // Use Number for consistency
+    const experience = Number(card.dataset.experience);
+    const charges = Number(card.dataset.charges);
+
+    let matches = false;
+
+    if (match) {
+      const field = match[1];
+      const operator = match[2] || '=';
+      const value = Number(match[3]);  // Consistent numeric parsing
+      const fieldValue = field === 'age' ? age : field === 'experience' ? experience : charges;
+
+      switch (operator) {
+        case '>':
+          matches = fieldValue > value;
+          break;
+        case '>=':
+          matches = fieldValue >= value;
+          break;
+        case '<':
+          matches = fieldValue < value;
+          break;
+        case '<=':
+          matches = fieldValue <= value;
+          break;
+        case '=':
+        default:
+          matches = fieldValue === value;
+          break;
+      }
+    } else {
+      matches = 
+        name.includes(query) ||
+        designation.includes(query) ||
+        updatedAt.includes(query);
+    }
+
+    if (matches) {
+      card.style.display = 'block';
+      hasMatches = true;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  const noResults = document.getElementById('no-results');
+  noResults.classList.toggle('hidden', hasMatches);
+});
   </script>
 </body>
 </html>
