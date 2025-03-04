@@ -75,4 +75,4 @@ gem 'bcrypt', '~> 3.1.7'
 gem "tailwindcss-rails", "~> 4.0"
 
 gem "razorpay", "~> 3.2"
-
+gem 'chartkick'
