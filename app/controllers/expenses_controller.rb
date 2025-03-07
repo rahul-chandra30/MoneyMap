@@ -10,34 +10,33 @@ class ExpensesController < ApplicationController
   end
 
   def show
-    month_number = Date::MONTHNAMES.index(params[:month])
-    expenses = current_user.expenses.where(year: params[:year], month: month_number)
-    render json: { expenses: expenses.map { |e| { category: e.category, amount_spent: e.amount_spent } } }
+    year = params[:year]
+    month = params[:month]
+    expenses = current_user.expenses.where(year: year, month: month)
+    render json: { expenses: expenses }
   end
 
   def create
     ActiveRecord::Base.transaction do
-      month_number = Date::MONTHNAMES.index(params[:month])
-      
-      current_user.expenses.where(year: params[:year], month: month_number).delete_all
+      # Delete existing expenses for this month/year
+      current_user.expenses
+        .where(year: expense_params[:year], month: expense_params[:month])
+        .destroy_all
 
-      params[:expenses].each do |expense|
-        new_expense = current_user.expenses.create!(
-          year: params[:year],
-          month: month_number,
+      # Create new expenses
+      expense_params[:expenses].each do |expense|
+        current_user.expenses.create!(
+          year: expense_params[:year],
+          month: expense_params[:month],
           category: expense[:category],
           amount_spent: expense[:amount_spent]
         )
-        current_user.send_notification(
-          "Expense Added",
-          "#{new_expense.category} ₹#{new_expense.amount_spent}"
-        )
       end
 
-      render json: { success: true, message: "Expenses saved successfully" }
-    rescue => e
-      render json: { success: false, error: e.message }, status: :unprocessable_entity
+      render json: { message: "Expenses saved successfully" }, status: :ok
     end
+  rescue StandardError => e
+    render json: { error: e.message }, status: :unprocessable_entity
   end
 
   def update
@@ -62,6 +61,10 @@ class ExpensesController < ApplicationController
   private
 
   def expense_params
-    params.permit(:year, :month, :category, :amount_spent, expenses: [:category, :amount_spent])
+    params.require(:expense).permit(
+      :year,
+      :month,
+      expenses: [ :category, :amount_spent ]
+    )
   end
 end

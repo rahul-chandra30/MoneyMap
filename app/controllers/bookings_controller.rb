@@ -2,56 +2,59 @@ class BookingsController < ApplicationController
   before_action :authenticate_user!
 
   def create
-    expert = Expert.find(params[:expert_id])
-    amount = expert.charges_per_session.presence || 1.0
-
     @booking = Booking.new(
       user: current_user,
-      expert: expert,
+      expert: Expert.find(params[:expert_id]),
       user_name: current_user.name,
-      expert_name: expert.name,
+      expert_name: Expert.find(params[:expert_id]).name,
       session_date: params[:session_date],
       time_slot: params[:time_slot],
-      charges_paid: amount,
-      payment_status: 'pending',
       booking_timestamp: Time.current
     )
 
-    if @booking.save
-      order = Razorpay::Order.create(
-        amount: (amount * 100).to_i,
-        currency: 'INR',
-        receipt: @booking.booking_id
-      )
+    if Booking.exists?(expert_id: @booking.expert_id, session_date: @booking.session_date, time_slot: @booking.time_slot)
+      render json: { error: "This time slot is already booked for this expert." }, status: :unprocessable_entity
+      return
+    end
 
-      @booking.update(razorpay_order_id: order.id)
-      
-      render json: {
-        id: order.id,
-        amount: order.amount,
-        currency: order.currency,
-        booking_id: @booking.booking_id
-      }
+    if @booking.save
+      # Broadcast to BookingsChannel
+      ActionCable.server.broadcast("bookings_channel_#{@booking.expert_id}", {
+        action: "booking_created",
+        expert_id: @booking.expert_id,
+        session_date: @booking.session_date,
+        time_slot: @booking.time_slot
+      })
+
+      # Broadcast notifications
+      ActionCable.server.broadcast("notifications_channel_#{current_user.id}", {
+        title: "Booking Confirmed",
+        message: "You’ve booked #{@booking.expert_name} on #{@booking.session_date} at #{@booking.time_slot}.",
+        time: Time.current.strftime("%H:%M")
+      })
+      ActionCable.server.broadcast("notifications_channel_#{@booking.expert_id}", {
+        title: "New Booking",
+        message: "#{@booking.user_name} has booked you on #{@booking.session_date} at #{@booking.time_slot}.",
+        time: Time.current.strftime("%H:%M")
+      })
+
+      # Send emails
+      BookingMailer.user_confirmation(@booking).deliver_later
+      BookingMailer.expert_notification(@booking).deliver_later
+
+      render json: { success: true, booking_id: @booking.booking_id }
     else
-      render json: { error: @booking.errors.full_messages }, 
-             status: :unprocessable_entity
+      render json: { error: @booking.errors.full_messages }, status: :unprocessable_entity
     end
   rescue => e
     render json: { error: e.message }, status: :internal_server_error
   end
 
-  def payment_callback
-    @booking = Booking.find_by(booking_id: params[:booking_id])
-    
-    if @booking
-      @booking.update(
-        payment_status: 'completed',
-        razorpay_payment_id: params[:razorpay_payment_id]
-      )
-      render json: { success: true }
-    else
-      render json: { success: false }, status: :not_found
-    end
+  def available_slots
+    expert_id = params[:expert_id]
+    date = params[:date]
+    booked_slots = Booking.where(expert_id: expert_id, session_date: date).pluck(:time_slot)
+    render json: { booked: booked_slots }
   end
 
   def index

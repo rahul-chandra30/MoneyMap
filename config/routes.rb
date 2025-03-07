@@ -22,11 +22,11 @@ Rails.application.routes.draw do
   patch "/profile", to: "profiles#update"
 
   ## ========= Expenses ========= ##
-  resources :expenses, only: [ :new, :create, :show ]
+  resources :expenses, only: [ :new, :create, :show, :update ]
   get "/expenses", to: "expenses#new"
 
   ## ========= Expenditures ========= ##
-  resources :expenditures, only: [ :show, :create, :update ]
+  resources :expenditures, only: [ :show, :create, :update, :show ]
 
   ## ========= Expert Authentication ========= ##
   get "expert_signup", to: "experts#new"
@@ -58,6 +58,12 @@ Rails.application.routes.draw do
 
   # Razorpay webhook route
   post "/razorpay_webhook", to: "webhooks#razorpay"
+
+  resources :bookings, only: [:create, :index] do
+    collection do
+      get "available_slots" # New route for fetching slots
+    end
+  end
 
   # Chat routes
   get "user/chat", to: "chat_rooms#user_chat", as: "user_chat"

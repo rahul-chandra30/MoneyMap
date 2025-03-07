@@ -7,10 +7,19 @@ class Expense < ApplicationRecord
   scope :total_spent, -> { sum(:amount_spent) }
 
   before_save :format_amount
+  after_commit :broadcast_dashboard_update
 
   private
 
   def format_amount
     self.amount_spent = amount_spent.to_i
+  end
+
+  def broadcast_dashboard_update
+    return unless user
+    data = DashboardController.new.send(:fetch_data_for_broadcast, user, year, month)
+    ::DashboardChannel.broadcast_to(user, data)
+  rescue => e
+    Rails.logger.error "Failed to broadcast dashboard update: #{e.message}"
   end
 end

@@ -4,17 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Expert Opinion - MoneyMap</title>
-
   <%= csrf_meta_tags %>
   <%= csp_meta_tag %>
-  
-<style>
+  <%= action_cable_meta_tag %>
+  <!-- Chartkick not needed here, but keeping CDN imports clean -->
+  <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+  <style>
     body {
       background-color: #f3f4f6;
       display: flex;
       min-height: 100vh;
+      font-family: Arial, sans-serif;
     }
-    
     header {
       display: flex;
       justify-content: space-between;
@@ -26,21 +28,15 @@
       position: fixed;
       top: 0;
       left: 0;
-    }
-    
-    .logo-container {
-      display: flex;
-      align-items: center;
+      z-index: 1000;
     }
     .logo-container img {
       height: 50px;
     }
-    
     .profile-container {
       display: flex;
       align-items: center;
     }
-    
     .profile-icon {
       width: 40px;
       height: 40px;
@@ -50,21 +46,18 @@
       align-items: center;
       justify-content: center;
       margin-right: 10px;
-      cursor: pointer;
+      text-decoration: none;
+      color: #374151;
     }
-    
     .logout {
       font-size: 1rem;
-      color:rgb(255, 73, 73);
+      color: #ff4949;
       text-decoration: none;
       font-weight: bold;
-      cursor: pointer;
     }
     .logout:hover {
-      text-decoration: none;
-      cursor: pointer;
+      text-decoration: underline;
     }
-
     .sidebar {
       background-color: white;
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
@@ -73,13 +66,11 @@
       top: 70px;
       left: 0;
       height: calc(100vh - 70px);
+      width: 260px;
       display: flex;
       flex-direction: column;
-      width: 260px;
     }
-
     .sidebar a {
-      display: block;
       padding: 15px;
       margin-bottom: 10px;
       font-size: 1rem;
@@ -88,125 +79,52 @@
       border-radius: 5px;
     }
     .sidebar a.active, .sidebar a:hover {
-      background-color:rgb(126, 220, 151);
+      background-color: #7edc97;
       color: white;
     }
-
     .content {
       margin-left: 270px;
       padding: 20px;
-      width: 100%;
+      width: calc(100% - 270px);
       margin-top: 60px;
     }
-
-    .card-container {
-      display: flex;
-      gap: 20px;
-      margin-top: 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-      flex: 1;
-      text-align: center;
-    }
-
-    .expense-list {
-      margin-top: 20px;
-    }
-
-    .expense-item {
-      background: white;
-      padding: 10px;
-      border-radius: 5px;
-      box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
-      margin-bottom: 10px;
-    }
-
-      .filters {
-      margin-bottom: 1.5rem;
-      margin-top: 1rem;
-    }
-    
-    select {
-      padding: 0.5rem;
-      border-radius: 0.375rem;
-      border: 1px solid #d1d5db;
-      margin-right: 1rem;
-    }
-    
-    .card h2 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-    }
-    
-    .amount {
-      font-size: 1.5rem;
-      font-weight: bold;
-    }
-    
-    .positive { color: #059669; }
-    .negative { color: #DC2626; }
-
     .expert-cards-container {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: 20px;
-      padding: 20px 0;
     }
-
     .expert-card {
       background: white;
-      border-radius: 10px;
       padding: 20px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: transform 0.2s ease;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: transform 0.2s;
     }
-
     .expert-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
-    .expert-header {
-      border-bottom: 1px solid #e5e7eb;
-      padding-bottom: 10px;
-      margin-bottom: 10px;
-    }
-
-    .expert-name {
-      font-size: 1.25rem;
+    .expert-header h2 {
+      font-size: 1.5rem;
       font-weight: bold;
-      color: #1f2937;
-    }
-
-    .expert-designation {
-      color: #6b7280;
-      font-size: 0.875rem;
-      margin-top: 4px;
-    }
-
-    .expert-details p {
-      margin: 8px 0;
-      color: #4b5563;
-    }
-
-    .expert-details span {
-      font-weight: 500;
       color: #374151;
     }
-
-    .charges {
-      margin-top: 12px;
-      padding-top: 8px;
-      border-top: 1px dashed #e5e7eb;
-      color: #059669 !important;
-      font-weight: bold;
+    .expert-designation {
+      color:rgb(57, 57, 57);
+      font-size: 1rem;
     }
-
+    .expert-details p {
+      margin: 5px 0;
+      color: #666;
+    }
+    .expert-details span {
+      font-weight: bold;
+      color: #374151;
+    }
+    .charges {
+      margin-top: 10px;
+      color: #059669;
+    }
     .modal {
       display: none;
       position: fixed;
@@ -219,94 +137,83 @@
       justify-content: center;
       align-items: center;
     }
-
     .modal.show {
       display: flex;
     }
-
     .modal-content {
       background-color: white;
-      padding: 2rem;
+      padding: 20px;
+      width: 50%;
+      max-height: 80vh;
+      overflow-y: auto;
       border-radius: 10px;
-      width: 90%;
-      max-width: 600px;
-      position: relative;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     }
-
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem;
     }
-
     .close-button {
-      font-size: 1.5rem;
       background: none;
       border: none;
+      font-size: 1.5rem;
       cursor: pointer;
-      color: #666;
     }
-
-    .modal-body {
-      margin-bottom: 1.5rem;
-    }
-
     .modal-body p {
-      margin: 0.5rem 0;
+      margin: 5px 0;
     }
-
-    .expert-info {
-      background-color: #f8fafc;
-      padding: 1rem;
-      border-radius: 8px;
-      margin: 1rem 0;
+    .designation {
+      color:rgb(58, 58, 58);
+      font-size: 1.1rem;
     }
-
-    .book-session-btn {
-      display: inline-block;
-      padding: 0.75rem 1.5rem;
-      background-color: #059669;
-      color: white;
-      text-decoration: none;
-      border-radius: 6px;
-      transition: background-color 0.2s;
+    .expert-info span:first-child {
+      font-weight: bold;
+      color: #374151;
     }
-
-    .book-session-btn:hover {
-      background-color: #047857;
-    }
-
     .session-charges {
-      font-size: 1.25rem;
       color: #059669;
       font-weight: bold;
-      margin-top: 1rem;
+      margin-top: 10px;
     }
-
     .time-slot-section {
-      margin-top: 1.5rem;
-      padding-top: 1.5rem;
-      border-top: 1px solid #e5e7eb;
+      margin-top: 20px;
     }
-
-    .time-slot-selector {
-      background-color: #f8fafc;
-      padding: 1rem;
-      border-radius: 8px;
+    .time-slot-section h3 {
+      color: #374151;
     }
-
-    #booking-date, #booking-time {
-      background-color: white;
-      border-color: #d1d5db;
+    .time-slot-selector select, .time-slot-selector input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 5px;
     }
-
-    #booking-date:focus, #booking-time:focus {
-      border-color: #059669;
-      ring: 2px solid #059669;
+    .book-session-btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 10px 20px;
+      background-color:rgb(74, 156, 96);
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+      font-weight: bold;
     }
-</style>
-
+    .book-session-btn:hover {
+      background-color: #60be79;
+    }
+    .book-session-btn.disabled {
+      background-color: #d1d5db;
+      cursor: not-allowed;
+    }
+    #slot-status {
+      margin-top: 10px;
+      color: #666;
+    }
+    #no-results {
+      margin-top: 20px;
+    }
+  </style>
 </head>
 <body>
   <!-- Header -->
@@ -315,34 +222,21 @@
       <%= image_tag "money_map.png", alt: "MoneyMap Logo" %>
     </div>
     <div class="profile-container">
-      <button class="profile-container">
-        <%= link_to "👤", profile_path, class: "profile-icon" %>
-      </button>
-      <nav>
-        <button><%= link_to "Log Out", signin_path, method: :delete, class: "logout" %></button>
-      </nav>
+      <%= link_to "👤", profile_path, class: "profile-icon" %>
+      <%= link_to "Log Out", signout_path, data: { turbo_method: :delete }, class: "logout" %>
     </div>
   </header>
 
   <!-- Sidebar -->
   <aside class="sidebar">
-    <%= link_to "Dashboard", 
-        dashboard_path, 
-        class: "#{current_page?(dashboard_path) ? 'active' : ''}" %>
-    
-    <%= link_to "Enter / Edit Spends", 
-        expenses_path, 
-        class: "#{current_page?(expenses_path) ? 'active' : ''}" %>
-    
-    <%= link_to "Expert Opinion", 
-        expert_opinion_path,
-        class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
-    
-        <%= link_to "Live Chat 💬", user_chat_path, class: "#{current_page?(user_chat_path) ? 'active' : ''}" %>
+    <%= link_to "Dashboard", dashboard_path, class: "#{current_page?(dashboard_path) ? 'active' : ''}" %>
+    <%= link_to "Enter / Edit Spends", expenses_path, class: "#{current_page?(expenses_path) ? 'active' : ''}" %>
+    <%= link_to "Expert Opinion", expert_opinion_path, class: "#{current_page?(expert_opinion_path) ? 'active' : ''}" %>
+    <%= link_to "Live Chat 💬", user_chat_path, class: "#{current_page?(user_chat_path) ? 'active' : ''}" %>
   </aside>
 
   <!-- Main Content -->
-<main class="content">
+  <main class="content">
     <h1 class="text-2xl font-bold mb-6">Expert Opinion</h1>
     
     <!-- Search Bar -->
@@ -377,7 +271,7 @@
     <div class="modal-content">
       <div class="modal-header">
         <h2 id="modalExpertName" class="text-2xl font-bold"></h2>
-        <button onclick="closeModal()" class="close-button">&times;</button>
+        <button onclick="closeModal()" class="close-button">×</button>
       </div>
       <div class="modal-body">
         <p class="designation"></p>
@@ -388,7 +282,7 @@
         </div>
         <p class="session-charges"></p>
         
-        <!-- Adding Time Slot Selection -->
+        <!-- Time Slot Selection -->
         <div class="time-slot-section">
           <h3 class="text-lg font-semibold mb-3">Select Time Slot</h3>
           <div class="time-slot-selector">
@@ -400,180 +294,195 @@
             
             <label for="booking-time" class="block text-sm font-medium text-gray-700 mb-2">Select Time Slot:</label>
             <select id="booking-time" class="p-2 border rounded-md w-full" required>
+              <option value="">Select a time slot</option>
               <% (9..19).each do |hour| %>
                 <option value="<%= "#{hour}:00" %>"><%= "#{hour}:00 - #{hour + 1}:30" %></option>
               <% end %>
             </select>
+            <p id="slot-status"></p>
           </div>
         </div>
       </div>
       <div class="modal-footer">
-        <a href="#" class="book-session-btn">Book Session</a>
+        <a href="#" id="book-session-btn" class="book-session-btn">Book Session</a>
       </div>
     </div>
   </div>
 
   <script>
-    async function showModal(name, designation, age, experience, about, charges, expertId) {
+    let currentExpertId = null;
+
+    // ActionCable Setup
+    const cable = ActionCable.createConsumer('/cable');
+
+    function showModal(name, designation, age, experience, about, charges, expertId) {
       const modal = document.getElementById('expertModal');
+      currentExpertId = expertId;
+
       modal.querySelector('#modalExpertName').textContent = name;
       modal.querySelector('.designation').textContent = designation || "Designation not specified";
       modal.querySelector('#modalAge').textContent = age || "Not specified";
       modal.querySelector('#modalExperience').textContent = experience ? `${experience} years` : "Not specified";
       modal.querySelector('#modalAbout').textContent = about || "No description available";
       modal.querySelector('.session-charges').textContent = charges ? `Session Charges: ₹${charges}` : "Session Charges: Not specified";
-      
+
       const today = new Date().toISOString().split('T')[0];
-      document.getElementById('booking-date').min = today;
-      
-      const bookButton = modal.querySelector('.book-session-btn');
-      bookButton.onclick = async function() {
-        const selectedDate = document.getElementById('booking-date').value;
-        const selectedTime = document.getElementById('booking-time').value;
-        
-        if (!selectedDate || !selectedTime) {
-          alert('Please select both date and time slot');
-          return false;
-        }
-        
-        try {
-          const response = await fetch('/bookings', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
-            },
-            body: JSON.stringify({
-              expert_id: expertId,
-              session_date: selectedDate,
-              time_slot: selectedTime
-            })
-          });
+      const dateInput = document.getElementById('booking-date');
+      dateInput.value = today;
+      dateInput.min = today;
 
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Failed to create booking');
-          }
+      fetchAvailableSlots(expertId, today);
 
-          alert('Booking request sent successfully!');
-          closeModal();
-          window.location.reload();
+      dateInput.onchange = () => fetchAvailableSlots(expertId, dateInput.value);
 
-        } catch (error) {
-          console.error('Error:', error);
-          alert(error.message || 'Something went wrong. Please try again.');
-        }
-      };
-      
+      const bookButton = modal.querySelector('#book-session-btn');
+      bookButton.onclick = bookSession;
+
       modal.classList.add('show');
       modal.classList.remove('hidden');
+
+      // Subscribe to BookingsChannel for this expert
+      cable.subscriptions.create({ channel: "BookingsChannel", expert_id: expertId }, {
+        received(data) {
+          console.log("Booking update received:", data);
+          if (data.action === "booking_created" && data.expert_id == expertId) {
+            fetchAvailableSlots(expertId, document.getElementById('booking-date').value);
+          }
+        }
+      });
     }
 
     function closeModal() {
       const modal = document.getElementById('expertModal');
       modal.classList.remove('show');
       modal.classList.add('hidden');
+      currentExpertId = null;
     }
 
-    // Close modal when clicking outside
     window.onclick = function(event) {
       const modal = document.getElementById('expertModal');
       if (event.target === modal) {
         closeModal();
       }
+    };
+
+    async function fetchAvailableSlots(expertId, date) {
+      const timeSelect = document.getElementById('booking-time');
+      const status = document.getElementById('slot-status');
+      status.textContent = "Checking availability...";
+
+      try {
+        const response = await fetch(`/bookings/available_slots?expert_id=${expertId}&date=${date}`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        const slots = await response.json();
+
+        timeSelect.innerHTML = '<option value="">Select a time slot</option>';
+        const allSlots = Array.from({ length: 11 }, (_, i) => `${i + 9}:00`);
+        allSlots.forEach(slot => {
+          const isAvailable = !slots.booked.includes(slot);
+          const option = document.createElement('option');
+          option.value = slot;
+          option.text = `${slot} - ${parseInt(slot) + 1}:30${isAvailable ? '' : ' (Booked)'}`;
+          option.disabled = !isAvailable;
+          timeSelect.appendChild(option);
+        });
+
+        status.textContent = slots.booked.length > 0 ? "Some slots are booked." : "All slots available.";
+      } catch (error) {
+        console.error('Error fetching slots:', error);
+        status.textContent = "Error loading slots.";
+      }
     }
 
-    // Add this to your JavaScript where the income saving fetch request is made
-    async function saveIncome(year, month, income) {
+    async function bookSession() {
+      const selectedDate = document.getElementById('booking-date').value;
+      const selectedTime = document.getElementById('booking-time').value;
+      const bookButton = document.getElementById('book-session-btn');
+
+      if (!selectedDate || !selectedTime) {
+        alert('Please select both date and time slot');
+        return false;
+      }
+
+      bookButton.classList.add('disabled');
+      bookButton.textContent = "Booking...";
+
       try {
-        const response = await fetch('/expenditures', {
+        const response = await fetch('/bookings', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': document.querySelector("[name='csrf-token']").content
           },
           body: JSON.stringify({
-            year: year,
-            month: month,
-            income: income
+            expert_id: currentExpertId,
+            session_date: selectedDate,
+            time_slot: selectedTime
           })
         });
 
-        const data = await response.json();
-        
         if (!response.ok) {
-          throw new Error(data.error || 'Failed to save income');
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to create booking');
         }
 
-        return data;
+        alert('Session booked successfully!');
+        closeModal();
       } catch (error) {
-        console.error('Error saving income:', error);
-        throw error;
+        console.error('Error:', error);
+        alert(error.message || 'Something went wrong. Please try again.');
+      } finally {
+        bookButton.classList.remove('disabled');
+        bookButton.textContent = "Book Session";
       }
     }
 
+    // Search Bar Logic
+    document.getElementById('expert-search').addEventListener('input', function() {
+      const query = this.value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.expert-card');
+      let hasMatches = false;
 
-  // Updated Search Bar Script
-  document.getElementById('expert-search').addEventListener('input', function() {
-  const query = this.value.toLowerCase().trim();
-  const cards = document.querySelectorAll('.expert-card');
-  let hasMatches = false;
+      const match = query.match(/^(age|experience|charges)\s*(>|>=|<|<=|=)?\s*(\d+)$/);
+      
+      cards.forEach(card => {
+        const name = card.dataset.name || '';
+        const designation = card.dataset.designation || '';
+        const updatedAt = card.dataset.updatedAt || '';
+        const age = Number(card.dataset.age);
+        const experience = Number(card.dataset.experience);
+        const charges = Number(card.dataset.charges);
 
-  const match = query.match(/^(age|experience|charges)\s*(>|>=|<|<=|=)?\s*(\d+)$/);
-  
-  cards.forEach(card => {
-    const name = card.dataset.name || '';
-    const designation = card.dataset.designation || '';
-    const updatedAt = card.dataset.updatedAt || '';
-    // Ensure numeric parsing - no extra || 0 needed if data attributes are set
-    const age = Number(card.dataset.age);  // Use Number for consistency
-    const experience = Number(card.dataset.experience);
-    const charges = Number(card.dataset.charges);
+        let matches = false;
 
-    let matches = false;
+        if (match) {
+          const field = match[1];
+          const operator = match[2] || '=';
+          const value = Number(match[3]);
+          const fieldValue = field === 'age' ? age : field === 'experience' ? experience : charges;
 
-    if (match) {
-      const field = match[1];
-      const operator = match[2] || '=';
-      const value = Number(match[3]);  // Consistent numeric parsing
-      const fieldValue = field === 'age' ? age : field === 'experience' ? experience : charges;
+          switch (operator) {
+            case '>': matches = fieldValue > value; break;
+            case '>=': matches = fieldValue >= value; break;
+            case '<': matches = fieldValue < value; break;
+            case '<=': matches = fieldValue <= value; break;
+            case '=': default: matches = fieldValue === value; break;
+          }
+        } else {
+          matches = 
+            name.includes(query) ||
+            designation.includes(query) ||
+            updatedAt.includes(query);
+        }
 
-      switch (operator) {
-        case '>':
-          matches = fieldValue > value;
-          break;
-        case '>=':
-          matches = fieldValue >= value;
-          break;
-        case '<':
-          matches = fieldValue < value;
-          break;
-        case '<=':
-          matches = fieldValue <= value;
-          break;
-        case '=':
-        default:
-          matches = fieldValue === value;
-          break;
-      }
-    } else {
-      matches = 
-        name.includes(query) ||
-        designation.includes(query) ||
-        updatedAt.includes(query);
-    }
+        card.style.display = matches ? 'block' : 'none';
+        hasMatches = hasMatches || matches;
+      });
 
-    if (matches) {
-      card.style.display = 'block';
-      hasMatches = true;
-    } else {
-      card.style.display = 'none';
-    }
-  });
-
-  const noResults = document.getElementById('no-results');
-  noResults.classList.toggle('hidden', hasMatches);
-});
+      document.getElementById('no-results').classList.toggle('hidden', hasMatches);
+    });
   </script>
 </body>
 </html>
